@@ -255,7 +255,7 @@ impl Database {
             [],
         ).map_err(|e| DatabaseError::MigrationError(e.to_string()))?;
 
-        // Team statistics table
+        // Team statistics table (no foreign key to avoid circular dependency)
         self.conn.execute(
             "CREATE TABLE IF NOT EXISTS team_statistics (
                 team_id TEXT PRIMARY KEY,
@@ -266,8 +266,7 @@ impl Database {
                 goals_for INTEGER DEFAULT 0,
                 goals_against INTEGER DEFAULT 0,
                 points INTEGER DEFAULT 0,
-                league_position INTEGER,
-                FOREIGN KEY (team_id) REFERENCES teams(id)
+                league_position INTEGER
             )",
             [],
         ).map_err(|e| DatabaseError::MigrationError(e.to_string()))?;
