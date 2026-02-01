@@ -1,6 +1,7 @@
 use crate::data::DatabaseError;
 use crate::team::{
-    Player, Team, League, MatchResult, PlayerSlot, TeamStatistics, Position, PlayerRole, Duty
+    Player, Team, League, MatchResult, PlayerSlot, TeamStatistics, Position, PlayerRole, Duty,
+    TeamFinance, FinanceTransaction, TransactionType, SeasonFinanceReport, PlayerSeasonStats,
 };
 
 /// Repository for Team data access
@@ -94,4 +95,57 @@ pub trait TransferMarketRepository {
     fn get_market_players(&self) -> Result<Vec<Player>, DatabaseError>;
     fn get_market_listing(&self, player_id: &str) -> Result<Option<MarketListing>, DatabaseError>;
     fn update_price(&self, player_id: &str, new_price: u32) -> Result<(), DatabaseError>;
+}
+
+/// Repository for team finance
+pub trait TeamFinanceRepository {
+    fn get(&self, team_id: &str) -> Result<TeamFinance, DatabaseError>;
+    fn update(&self, finance: &TeamFinance) -> Result<(), DatabaseError>;
+    fn create(&self, finance: &TeamFinance) -> Result<(), DatabaseError>;
+}
+
+/// Repository for finance transactions
+pub trait FinanceTransactionRepository {
+    fn create(&self, transaction: &FinanceTransaction) -> Result<(), DatabaseError>;
+    fn get_by_team(&self, team_id: &str, limit: usize) -> Result<Vec<FinanceTransaction>, DatabaseError>;
+    fn get_by_date_range(
+        &self,
+        team_id: &str,
+        start_year: u32,
+        start_month: u8,
+        start_day: u8,
+        end_year: u32,
+        end_month: u8,
+        end_day: u8,
+    ) -> Result<Vec<FinanceTransaction>, DatabaseError>;
+    fn get_by_type(
+        &self,
+        team_id: &str,
+        t_type: &TransactionType,
+    ) -> Result<Vec<FinanceTransaction>, DatabaseError>;
+}
+
+/// Repository for season finance reports
+pub trait SeasonFinanceReportRepository {
+    fn get(&self, team_id: &str, season: &str) -> Result<SeasonFinanceReport, DatabaseError>;
+    fn get_or_create(&self, team_id: &str, season: &str) -> Result<SeasonFinanceReport, DatabaseError>;
+    fn update(&self, report: &SeasonFinanceReport) -> Result<(), DatabaseError>;
+    fn get_history(&self, team_id: &str, limit: usize) -> Result<Vec<SeasonFinanceReport>, DatabaseError>;
+}
+
+/// Repository for player season statistics
+pub trait PlayerSeasonStatsRepository {
+    fn create(&self, stats: &PlayerSeasonStats) -> Result<(), DatabaseError>;
+    fn get_by_player(&self, player_id: &str, season: &str) -> Result<PlayerSeasonStats, DatabaseError>;
+    fn get_by_team(&self, team_id: &str, season: &str) -> Result<Vec<PlayerSeasonStats>, DatabaseError>;
+    fn update(&self, stats: &PlayerSeasonStats) -> Result<(), DatabaseError>;
+    fn get_or_create(&self, player_id: &str, season: &str, team_id: &str) -> Result<PlayerSeasonStats, DatabaseError>;
+    fn get_top_scorers(&self, season: &str, limit: usize) -> Result<Vec<PlayerSeasonStats>, DatabaseError>;
+    fn get_top_assists(&self, season: &str, limit: usize) -> Result<Vec<PlayerSeasonStats>, DatabaseError>;
+    fn get_top_rated(
+        &self,
+        season: &str,
+        min_appearances: u32,
+        limit: usize,
+    ) -> Result<Vec<PlayerSeasonStats>, DatabaseError>;
 }

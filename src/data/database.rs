@@ -304,6 +304,81 @@ impl Database {
             [],
         ).map_err(|e| DatabaseError::MigrationError(e.to_string()))?;
 
+        // Team finance table
+        self.conn.write().unwrap().execute(
+            "CREATE TABLE IF NOT EXISTS team_finance (
+                team_id TEXT PRIMARY KEY,
+                balance INTEGER NOT NULL DEFAULT 0,
+                wage_budget INTEGER NOT NULL DEFAULT 0,
+                transfer_budget INTEGER NOT NULL DEFAULT 0,
+                FOREIGN KEY (team_id) REFERENCES teams(id)
+            )",
+            [],
+        ).map_err(|e| DatabaseError::MigrationError(e.to_string()))?;
+
+        // Finance transactions table
+        self.conn.write().unwrap().execute(
+            "CREATE TABLE IF NOT EXISTS finance_transactions (
+                id TEXT PRIMARY KEY,
+                team_id TEXT NOT NULL,
+                transaction_type TEXT NOT NULL,
+                amount INTEGER NOT NULL,
+                description TEXT,
+                date_year INTEGER NOT NULL,
+                date_month INTEGER NOT NULL,
+                date_day INTEGER NOT NULL,
+                related_player_id TEXT,
+                FOREIGN KEY (team_id) REFERENCES teams(id),
+                FOREIGN KEY (related_player_id) REFERENCES players(id)
+            )",
+            [],
+        ).map_err(|e| DatabaseError::MigrationError(e.to_string()))?;
+
+        // Season finance reports table
+        self.conn.write().unwrap().execute(
+            "CREATE TABLE IF NOT EXISTS season_finance_reports (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                season TEXT NOT NULL,
+                team_id TEXT NOT NULL,
+                transfer_income INTEGER DEFAULT 0,
+                matchday_income INTEGER DEFAULT 0,
+                sponsorship INTEGER DEFAULT 0,
+                tv_revenue INTEGER DEFAULT 0,
+                prize_money INTEGER DEFAULT 0,
+                transfer_expenses INTEGER DEFAULT 0,
+                wage_expenses INTEGER DEFAULT 0,
+                bonus_expenses INTEGER DEFAULT 0,
+                staff_wages INTEGER DEFAULT 0,
+                facilities INTEGER DEFAULT 0,
+                youth_academy INTEGER DEFAULT 0,
+                UNIQUE(season, team_id),
+                FOREIGN KEY (team_id) REFERENCES teams(id)
+            )",
+            [],
+        ).map_err(|e| DatabaseError::MigrationError(e.to_string()))?;
+
+        // Player season stats table
+        self.conn.write().unwrap().execute(
+            "CREATE TABLE IF NOT EXISTS player_season_stats (
+                id TEXT PRIMARY KEY,
+                player_id TEXT NOT NULL,
+                season TEXT NOT NULL,
+                team_id TEXT NOT NULL,
+                appearances INTEGER DEFAULT 0,
+                goals INTEGER DEFAULT 0,
+                assists INTEGER DEFAULT 0,
+                clean_sheets INTEGER DEFAULT 0,
+                yellow_cards INTEGER DEFAULT 0,
+                red_cards INTEGER DEFAULT 0,
+                minutes_played INTEGER DEFAULT 0,
+                average_rating REAL DEFAULT 6.0,
+                UNIQUE(player_id, season),
+                FOREIGN KEY (player_id) REFERENCES players(id),
+                FOREIGN KEY (team_id) REFERENCES teams(id)
+            )",
+            [],
+        ).map_err(|e| DatabaseError::MigrationError(e.to_string()))?;
+
         Ok(())
     }
 
@@ -366,6 +441,26 @@ impl Database {
     /// Get TransferHistoryRepository instance
     pub fn transfer_history_repo(&self) -> crate::data::SqliteTransferHistoryRepository {
         crate::data::SqliteTransferHistoryRepository::new(self.conn.clone())
+    }
+
+    /// Get TeamFinanceRepository instance
+    pub fn team_finance_repo(&self) -> crate::data::SqliteTeamFinanceRepository {
+        crate::data::SqliteTeamFinanceRepository::new(self.conn.clone())
+    }
+
+    /// Get FinanceTransactionRepository instance
+    pub fn finance_transaction_repo(&self) -> crate::data::SqliteFinanceTransactionRepository {
+        crate::data::SqliteFinanceTransactionRepository::new(self.conn.clone())
+    }
+
+    /// Get SeasonFinanceReportRepository instance
+    pub fn season_finance_report_repo(&self) -> crate::data::SqliteSeasonFinanceReportRepository {
+        crate::data::SqliteSeasonFinanceReportRepository::new(self.conn.clone())
+    }
+
+    /// Get PlayerSeasonStatsRepository instance
+    pub fn player_season_stats_repo(&self) -> crate::data::SqlitePlayerSeasonStatsRepository {
+        crate::data::SqlitePlayerSeasonStatsRepository::new(self.conn.clone())
     }
 }
 

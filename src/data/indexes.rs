@@ -21,6 +21,12 @@ pub fn create_indexes(conn: &Connection) -> Result<(), rusqlite::Error> {
     // Transfer history table indexes
     create_transfer_history_indexes(conn)?;
 
+    // Finance tables indexes
+    create_finance_indexes(conn)?;
+
+    // Player stats indexes
+    create_player_stats_indexes(conn)?;
+
     Ok(())
 }
 
@@ -188,6 +194,82 @@ fn create_transfer_history_indexes(conn: &Connection) -> Result<(), rusqlite::Er
     // Index for transfer_type filtering
     conn.execute(
         "CREATE INDEX IF NOT EXISTS idx_transfer_history_type ON transfer_history(transfer_type)",
+        [],
+    )?;
+
+    Ok(())
+}
+
+/// Create indexes for finance tables
+fn create_finance_indexes(conn: &Connection) -> Result<(), rusqlite::Error> {
+    // Index for finance_transactions team_id lookups
+    conn.execute(
+        "CREATE INDEX IF NOT EXISTS idx_finance_transactions_team ON finance_transactions(team_id)",
+        [],
+    )?;
+
+    // Index for finance_transactions date queries
+    conn.execute(
+        "CREATE INDEX IF NOT EXISTS idx_finance_transactions_date ON finance_transactions(date_year, date_month, date_day)",
+        [],
+    )?;
+
+    // Index for finance_transactions type queries
+    conn.execute(
+        "CREATE INDEX IF NOT EXISTS idx_finance_transactions_type ON finance_transactions(transaction_type)",
+        [],
+    )?;
+
+    // Index for season_finance_reports season lookups
+    conn.execute(
+        "CREATE INDEX IF NOT EXISTS idx_season_reports_season ON season_finance_reports(season)",
+        [],
+    )?;
+
+    // Index for season_finance_reports team lookups
+    conn.execute(
+        "CREATE INDEX IF NOT EXISTS idx_season_reports_team ON season_finance_reports(team_id)",
+        [],
+    )?;
+
+    Ok(())
+}
+
+/// Create indexes for player_season_stats table
+fn create_player_stats_indexes(conn: &Connection) -> Result<(), rusqlite::Error> {
+    // Index for player_id lookups
+    conn.execute(
+        "CREATE INDEX IF NOT EXISTS idx_player_stats_player ON player_season_stats(player_id)",
+        [],
+    )?;
+
+    // Index for season lookups
+    conn.execute(
+        "CREATE INDEX IF NOT EXISTS idx_player_stats_season ON player_season_stats(season)",
+        [],
+    )?;
+
+    // Index for team_id lookups
+    conn.execute(
+        "CREATE INDEX IF NOT EXISTS idx_player_stats_team ON player_season_stats(team_id)",
+        [],
+    )?;
+
+    // Composite index for season + goals (leaderboard queries)
+    conn.execute(
+        "CREATE INDEX IF NOT EXISTS idx_player_stats_goals ON player_season_stats(season, goals DESC)",
+        [],
+    )?;
+
+    // Composite index for season + assists (leaderboard queries)
+    conn.execute(
+        "CREATE INDEX IF NOT EXISTS idx_player_stats_assists ON player_season_stats(season, assists DESC)",
+        [],
+    )?;
+
+    // Composite index for team + season (squad stats queries)
+    conn.execute(
+        "CREATE INDEX IF NOT EXISTS idx_player_stats_team_season ON player_season_stats(team_id, season)",
         [],
     )?;
 

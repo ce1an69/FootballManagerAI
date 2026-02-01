@@ -17,4 +17,7 @@ pub use match_result::{MatchResult, MatchEvent, MatchMode, MatchStatistics, Play
 pub use tactics::{Tactic, Formation, DefensiveHeight, PassingStyle, Tempo, PlayerRole, Duty, PlayerRoleAssignment};
 pub use attributes::{calculate_market_value, calculate_wage};
 pub use player_stats::PlayerSeasonStats;
-pub use finance::{TeamFinance, FinanceTransaction, TransactionType, GameDate, SeasonFinanceReport};
+pub use finance::{TeamFinance, FinanceTransaction, TransactionType, SeasonFinanceReport};
+
+// Re-export GameDate from game module for backward compatibility
+pub use crate::game::GameDate;

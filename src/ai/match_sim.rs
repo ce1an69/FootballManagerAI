@@ -1,4 +1,5 @@
 use crate::team::{Team, Player, MatchResult, MatchEvent, MatchMode, MatchStatistics, Position, PlayerMatchRating};
+use crate::ai::tactical::{infer_tactical_style, calculate_tactical_modifier, TacticalStyle};
 use rand::Rng;
 use rand::seq::SliceRandom;
 
@@ -20,13 +21,37 @@ impl MatchSimulator {
         away_players: &[Player],
         mode: MatchMode,
     ) -> MatchResult {
-        let home_strength = self.calculate_team_strength(home_team, home_players);
-        let away_strength = self.calculate_team_strength(away_team, away_players);
+        // Calculate effective abilities (considering morale, fatigue, fitness, injuries)
+        let home_attack = home_team.calculate_effective_attack(home_players);
+        let home_defense = home_team.calculate_effective_defense(home_players);
+        let home_midfield = home_team.calculate_effective_midfield(home_players);
+        let away_attack = away_team.calculate_effective_attack(away_players);
+        let away_defense = away_team.calculate_effective_defense(away_players);
+        let away_midfield = away_team.calculate_effective_midfield(away_players);
 
-        // Calculate goals based on strength difference
-        let (home_goals, away_goals) = self.calculate_score(
-            home_strength,
-            away_strength,
+        // Infer tactical styles from team tactics
+        let home_style = infer_tactical_style(&home_team.tactic);
+        let away_style = infer_tactical_style(&away_team.tactic);
+
+        // Calculate tactical modifier (-0.25 to +0.25)
+        let tactical_mod = calculate_tactical_modifier(&home_style, &away_style);
+
+        // Apply tactical modifiers to attack and defense values
+        // Home team gets positive boost if they have tactical advantage
+        // Defense is less affected by tactics (0.5x modifier) than attack (1.0x modifier)
+        let home_attack_mod = (home_attack as f64 * (1.0 + tactical_mod)) as u16;
+        let home_defense_mod = (home_defense as f64 * (1.0 + tactical_mod * 0.5)) as u16;
+        let away_attack_mod = (away_attack as f64 * (1.0 - tactical_mod)) as u16;
+        let away_defense_mod = (away_defense as f64 * (1.0 - tactical_mod * 0.5)) as u16;
+
+        // Calculate goals based on modified attack/defense/midfield values
+        let (home_goals, away_goals) = self.calculate_score_with_tactics(
+            home_attack_mod,
+            home_defense_mod,
+            home_midfield,
+            away_attack_mod,
+            away_defense_mod,
+            away_midfield,
             &mut rand::thread_rng(),
         );
 
@@ -125,6 +150,48 @@ impl MatchSimulator {
         // Add randomness
         let home_goals = (home_expected + rng.gen_range(-0.5..0.5)).floor().max(0.0).min(5.0) as u8;
         let away_goals = (away_expected + rng.gen_range(-0.5..0.5)).floor().max(0.0).min(5.0) as u8;
+
+        (home_goals, away_goals)
+    }
+
+    /// Calculate score based on team attack, defense, and midfield with tactical considerations
+    fn calculate_score_with_tactics(
+        &mut self,
+        home_attack: u16,
+        home_defense: u16,
+        home_midfield: u16,
+        away_attack: u16,
+        away_defense: u16,
+        away_midfield: u16,
+        rng: &mut rand::rngs::ThreadRng,
+    ) -> (u8, u8) {
+        // Calculate offensive strength: attack vs opponent's defense
+        // Higher attack + lower opponent defense = more goals
+        let home_offensive = (home_attack as f32) / (away_defense as f32).max(1.0);
+        let away_offensive = (away_attack as f32) / (home_defense as f32).max(1.0);
+
+        // Midfield control influences possession and goal opportunities
+        let midfield_ratio = home_midfield as f32 / (home_midfield + away_midfield) as f32;
+
+        // Home team expected goals
+        let home_expected = 1.5
+            + (home_offensive * 2.0) // Attack vs defense
+            + (midfield_ratio * 1.0); // Midfield advantage
+
+        // Away team expected goals
+        let away_expected = 1.5
+            + (away_offensive * 2.0) // Attack vs defense
+            + ((1.0 - midfield_ratio) * 1.0); // Midfield advantage
+
+        // Add randomness and clamp to reasonable range
+        let home_goals = (home_expected + rng.gen_range(-0.5..0.5))
+            .floor()
+            .max(0.0)
+            .min(6.0) as u8;
+        let away_goals = (away_expected + rng.gen_range(-0.5..0.5))
+            .floor()
+            .max(0.0)
+            .min(6.0) as u8;
 
         (home_goals, away_goals)
     }

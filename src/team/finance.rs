@@ -1,5 +1,6 @@
 use serde::{Deserialize, Serialize};
 use chrono::Datelike;
+use crate::game::GameDate;
 
 /// Team financial information
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -67,8 +68,29 @@ pub struct FinanceTransaction {
     pub transaction_type: TransactionType,
     pub amount: i64,               // Positive for income, negative for expense
     pub description: String,
-    pub date: GameDate,
+    pub date_year: u32,
+    pub date_month: u8,
+    pub date_day: u8,
     pub related_player_id: Option<String>,
+}
+
+impl FinanceTransaction {
+    /// Get the date as GameDate
+    pub fn date(&self) -> GameDate {
+        GameDate {
+            year: self.date_year as u16,
+            month: self.date_month,
+            day: self.date_day,
+        }
+    }
+
+    /// Create transaction with date
+    pub fn with_date(mut self, date: &GameDate) -> Self {
+        self.date_year = date.year as u32;
+        self.date_month = date.month;
+        self.date_day = date.day;
+        self
+    }
 }
 
 /// Type of transaction
@@ -88,31 +110,6 @@ pub enum TransactionType {
     StaffWages,
     Facilities,
     YouthAcademy,
-}
-
-/// Game date for financial records
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct GameDate {
-    pub year: u32,
-    pub month: u8,
-    pub day: u8,
-}
-
-impl GameDate {
-    /// Create a new game date
-    pub fn new(year: u32, month: u8, day: u8) -> Self {
-        Self { year, month, day }
-    }
-
-    /// Get current date as GameDate
-    pub fn today() -> Self {
-        let now = chrono::Utc::now();
-        Self {
-            year: now.year() as u32,
-            month: now.month() as u8,
-            day: now.day() as u8,
-        }
-    }
 }
 
 /// Season financial report
@@ -249,13 +246,5 @@ mod tests {
         assert_eq!(report.total_income, 1_500_000);
         assert_eq!(report.total_expense, 800_000);
         assert_eq!(report.net_profit, 700_000);
-    }
-
-    #[test]
-    fn test_game_date() {
-        let date = GameDate::new(2026, 7, 15);
-        assert_eq!(date.year, 2026);
-        assert_eq!(date.month, 7);
-        assert_eq!(date.day, 15);
     }
 }
