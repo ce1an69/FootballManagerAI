@@ -1,40 +1,10 @@
 // UI module - TUI interface using ratatui
 
-// This module will handle all UI rendering
-// Placeholder for now
+mod app;
+mod i18n;
+mod event;
 
-/// TUI application state
-#[derive(Debug, Clone)]
-pub struct TuiApp {
-    pub running: bool,
-}
-
-impl TuiApp {
-    pub fn new() -> Self {
-        Self {
-            running: true,
-        }
-    }
-
-    pub fn quit(&mut self) {
-        self.running = false;
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_tui_app_creation() {
-        let app = TuiApp::new();
-        assert!(app.running);
-    }
-
-    #[test]
-    fn test_tui_app_quit() {
-        let mut app = TuiApp::new();
-        app.quit();
-        assert!(!app.running);
-    }
-}
+// Re-exports
+pub use app::{TuiApp, RenderState};
+pub use i18n::{Language, TranslationKey, t};
+pub use event::{Event, should_process_key_event, is_char_key, is_enter_key, is_esc_key, is_up_key, is_down_key, is_left_key, is_right_key};
