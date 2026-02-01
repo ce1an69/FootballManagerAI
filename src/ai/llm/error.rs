@@ -1,26 +1,31 @@
+//! LLM integration error types
+//!
+//! This module defines all error types that can occur during LLM API interactions,
+//! including configuration errors, request failures, and response parsing issues.
+
 use thiserror::Error;
 
 #[derive(Error, Debug)]
 pub enum LlmError {
-    #[error("配置错误: {0}")]
+    #[error("Configuration error: {0}")]
     Config(String),
 
-    #[error("API 请求失败: {0}")]
+    #[error("API request failed: {0}")]
     Request(#[from] reqwest::Error),
 
-    #[error("API 返回错误: {message}")]
+    #[error("API error (code: {code:?}): {message}")]
     ApiError { message: String, code: Option<String> },
 
-    #[error("JSON 解析失败: {0}")]
+    #[error("JSON parse failed: {0}")]
     JsonParse(#[from] serde_json::Error),
 
-    #[error("流式传输中断")]
+    #[error("Stream closed unexpectedly")]
     StreamClosed,
 
-    #[error("重试次数耗尽")]
+    #[error("Maximum retries exceeded")]
     MaxRetriesExceeded,
 
-    #[error("API Key 未配置")]
+    #[error("API key not configured")]
     MissingApiKey,
 }
 
