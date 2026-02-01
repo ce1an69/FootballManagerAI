@@ -191,6 +191,8 @@ impl Database {
                 away_fouls INTEGER,
                 home_offsides INTEGER,
                 away_offsides INTEGER,
+                home_player_ratings TEXT,
+                away_player_ratings TEXT,
                 played_at INTEGER NOT NULL,
                 round INTEGER NOT NULL,
                 FOREIGN KEY (league_id) REFERENCES leagues(id),
