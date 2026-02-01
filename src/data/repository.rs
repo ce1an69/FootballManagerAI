@@ -1,6 +1,6 @@
 use crate::data::DatabaseError;
 use crate::team::{
-    Player, Team, League, MatchResult, PlayerSlot, TeamStatistics, Position, PlayerRole, Duty,
+    Player, Team, League, MatchResult, PlayerSlot, TeamStatistics,
     TeamFinance, FinanceTransaction, TransactionType, SeasonFinanceReport, PlayerSeasonStats,
 };
 

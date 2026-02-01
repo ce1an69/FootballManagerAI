@@ -91,7 +91,7 @@ impl RandomEvent {
     /// Convert the random event to a notification
     pub fn to_notification(&self) -> Notification {
         match self {
-            RandomEvent::Injury { player_id, player_name, injury_type } => {
+            RandomEvent::Injury { player_id: _, player_name, injury_type } => {
                 let (title, message, priority) = match injury_type {
                     InjuryType::Minor { weeks } => (
                         "Minor Injury Reported".to_string(),
@@ -129,7 +129,7 @@ impl RandomEvent {
                 }
             }
 
-            RandomEvent::TransferOffer { player_id, player_name, from_team, offer_amount } => {
+            RandomEvent::TransferOffer { player_id: _, player_name, from_team, offer_amount } => {
                 Notification {
                     id: uuid::Uuid::new_v4().to_string(),
                     title: "Transfer Offer Received".to_string(),
@@ -170,7 +170,7 @@ impl RandomEvent {
                 }
             }
 
-            RandomEvent::ContractExpiry { player_id, player_name } => {
+            RandomEvent::ContractExpiry { player_id: _, player_name } => {
                 Notification {
                     id: uuid::Uuid::new_v4().to_string(),
                     title: " Contract Expiring Soon".to_string(),

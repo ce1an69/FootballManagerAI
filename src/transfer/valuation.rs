@@ -104,7 +104,7 @@ pub fn predict_potential_value(player: &Player, years: u8) -> u64 {
         return evaluate_player_value(player);
     }
 
-    let future_age = player.age.saturating_add(years);
+    let _future_age = player.age.saturating_add(years);
     let mut predicted_player = player.clone();
 
     // Simulate aging and ability changes

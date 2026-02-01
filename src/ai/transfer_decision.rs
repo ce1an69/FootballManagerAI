@@ -1,7 +1,6 @@
-use crate::team::{Player, Team, Position};
+use crate::team::{Player, Position};
 use crate::data::{Database, TransferMarketRepository, PlayerRepository, TeamRepository};
 use std::collections::HashMap;
-use std::hash::Hash;
 
 /// AI transfer decision error types
 #[derive(Debug, thiserror::Error)]
@@ -292,7 +291,7 @@ fn execute_ai_transfer(
     market_repo.remove_from_market(&target.player_id)?;
 
     // Update player's team
-    let player_repo = database.player_repo();
+    let _player_repo = database.player_repo();
     // Note: Would need update method on player_repo
 
     Ok(AITransferAction {

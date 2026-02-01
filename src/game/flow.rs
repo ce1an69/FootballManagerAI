@@ -1,5 +1,5 @@
 use crate::game::{GameState, Screen, GameDate, NotificationType, NotificationPriority};
-use crate::team::{League, MatchResult, Team};
+use crate::team::MatchResult;
 use crate::data::{
     Database, ScheduledMatchData, ScheduledMatchRepository,
     MatchRepository, TeamStatisticsRepository, PlayerRepository,
@@ -153,7 +153,7 @@ pub fn update_after_match(
 }
 
 /// Check if current date is match day
-fn is_match_day(current_date: &GameDate, _scheduled_match: &ScheduledMatchData) -> bool {
+fn is_match_day(_current_date: &GameDate, _scheduled_match: &ScheduledMatchData) -> bool {
     // Simplified: assume match is on current day
     // In full implementation, would check scheduled date
     true

@@ -275,7 +275,7 @@ impl GameLoop {
         self.age_all_players()?;
 
         // Generate new season schedule
-        let new_league = self.generate_new_season_schedule()?;
+        let _new_league = self.generate_new_season_schedule()?;
 
         // Reset statistics
         self.reset_season_statistics()?;
@@ -314,7 +314,7 @@ impl GameLoop {
 
         // Process retirement updates and filter out retired players
         let mut retired_players = Vec::new();
-        for (player, update) in all_players.iter().zip(updates.iter()) {
+        for (player, _update) in all_players.iter().zip(updates.iter()) {
             self.database.player_repo().update(player)?;
 
             // Track retired players

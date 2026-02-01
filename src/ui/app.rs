@@ -1,4 +1,5 @@
 use crate::game::{GameState, Screen};
+use crate::team::MatchMode;
 use crate::ui::i18n::{Language, TranslationKey, t};
 use crate::ui::screens::*;
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
@@ -129,10 +130,26 @@ impl TuiApp {
                 self.game_state.navigate_to(new_screen);
             }
             None => {
-                // Check if ExitGame was signaled via 'q' key on main menu
+                // Handle special cases for specific screens
                 if self.game_state.current_screen == Screen::MainMenu
                     && key.code == KeyCode::Char('q') {
                     self.quit();
+                } else if self.game_state.current_screen == Screen::Settings
+                    && key.code == KeyCode::Enter {
+                    // Handle settings toggles
+                    if self.settings.should_toggle_language() {
+                        // Toggle language
+                        self.language = match self.language {
+                            Language::English => Language::Chinese,
+                            Language::Chinese => Language::English,
+                        };
+                    } else if self.settings.should_toggle_match_mode() {
+                        // Toggle match mode
+                        self.game_state.match_mode_preference = match self.game_state.match_mode_preference {
+                            MatchMode::Quick => MatchMode::Live,
+                            MatchMode::Live => MatchMode::Quick,
+                        };
+                    }
                 }
             }
         }

@@ -1,4 +1,4 @@
-use crossterm::event::{self, KeyCode, KeyEvent, KeyEventKind, MouseEvent};
+use crossterm::event::{self, KeyEvent, KeyEventKind, MouseEvent};
 
 /// UI event types
 #[derive(Debug, Clone, PartialEq)]

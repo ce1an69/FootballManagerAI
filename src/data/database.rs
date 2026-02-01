@@ -1,6 +1,5 @@
 use rusqlite::Connection;
 use std::sync::{Arc, RwLock};
-use std::path::Path;
 use thiserror::Error;
 
 // Import repository implementations using the re-exported types from mod.rs

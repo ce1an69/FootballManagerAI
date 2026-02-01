@@ -280,6 +280,7 @@ fn create_player_stats_indexes(conn: &Connection) -> Result<(), rusqlite::Error>
 ///
 /// This should be called in development/testing to verify index effectiveness
 #[cfg(debug_assertions)]
+#[allow(dead_code)]
 pub fn analyze_index_usage(conn: &Connection) -> Result<Vec<IndexStats>, rusqlite::Error> {
     // Get index statistics
     let mut stmt = conn.prepare(
@@ -302,6 +303,7 @@ pub fn analyze_index_usage(conn: &Connection) -> Result<Vec<IndexStats>, rusqlit
 
 /// Index statistics information
 #[derive(Debug, Clone)]
+#[allow(dead_code)]
 pub struct IndexStats {
     pub name: String,
     pub table_name: String,

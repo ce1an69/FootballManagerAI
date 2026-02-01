@@ -1,4 +1,4 @@
-use crate::team::{League, Team, MatchResult, MatchMode};
+use crate::team::{League, Team, MatchMode};
 use std::collections::HashMap;
 use uuid::Uuid;
 

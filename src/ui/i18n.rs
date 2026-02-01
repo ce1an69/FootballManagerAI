@@ -46,6 +46,7 @@ pub enum TranslationKey {
     NextMatch,
     LeagueTable,
     SaveLoad,
+    Settings,
     ExitGame,
 
     // Team management
@@ -120,6 +121,7 @@ fn en(key: TranslationKey) -> &'static str {
         TranslationKey::NextMatch => "Next Match",
         TranslationKey::LeagueTable => "League Table",
         TranslationKey::SaveLoad => "Save/Load",
+        TranslationKey::Settings => "Settings",
         TranslationKey::ExitGame => "Exit Game",
 
         TranslationKey::Squad => "Squad",
@@ -182,6 +184,7 @@ fn zh(key: TranslationKey) -> &'static str {
         TranslationKey::NextMatch => "下一场比赛",
         TranslationKey::LeagueTable => "联赛积分榜",
         TranslationKey::SaveLoad => "存档/读档",
+        TranslationKey::Settings => "设置",
         TranslationKey::ExitGame => "退出游戏",
 
         TranslationKey::Squad => "阵容",

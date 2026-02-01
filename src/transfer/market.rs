@@ -241,7 +241,7 @@ impl TransferMarket {
         let player = &self.players[player_index];
 
         // Check if player is on market
-        let listing = self.listings
+        let _listing = self.listings
             .iter()
             .find(|l| l.player_id == player_id)
             .ok_or(TransferError::PlayerNotOnMarket)?;

@@ -1,7 +1,7 @@
 use crate::data::{DatabaseError, TeamRepository};
 use crate::team::{Team, TeamStatistics};
 use crate::team::Tactic;
-use rusqlite::{params, Row};
+use rusqlite::params;
 use std::sync::{Arc, RwLock};
 
 /// SQLite implementation of TeamRepository

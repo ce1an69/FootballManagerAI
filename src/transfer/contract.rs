@@ -1,5 +1,5 @@
 use crate::team::Player;
-use crate::data::{Database, PlayerRepository, TeamRepository, LeagueRepository};
+use crate::data::{Database, PlayerRepository, TeamRepository};
 use crate::transfer::market::TransferError;
 use rand::Rng;
 

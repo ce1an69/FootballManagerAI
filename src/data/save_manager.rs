@@ -1,9 +1,7 @@
 use crate::data::{Database, DatabaseError};
 use crate::game::GameState;
-use crate::team::{League, Team};
 use std::path::{Path, PathBuf};
 use std::fs;
-use rusqlite::params;
 
 /// Save metadata
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
@@ -198,7 +196,7 @@ impl SaveManager {
         &self,
         slot: u8,
         state: &GameState,
-        db: &Database,
+        _db: &Database,
     ) -> Result<PathBuf, DatabaseError> {
         // Get current timestamp
         let saved_at = std::time::SystemTime::now()

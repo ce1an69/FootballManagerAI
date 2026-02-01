@@ -22,7 +22,7 @@ pub enum InitError {
 pub fn start_new_game(
     save_slot: u8,
     league_name: String,
-    country: String,
+    _country: String,
     num_teams: usize,
     skill_level: u16,
     start_year: u16,

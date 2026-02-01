@@ -112,15 +112,15 @@ impl EventHandler {
                 state.navigate_to(Screen::MatchLive { match_id });
                 Ok(Effect::Render)
             }
-            GameEvent::BuyPlayer { player_id } => {
+            GameEvent::BuyPlayer { player_id: _ } => {
                 // Will be implemented when transfer system is ready
                 Ok(Effect::None)
             }
-            GameEvent::SellPlayer { player_id } => {
+            GameEvent::SellPlayer { player_id: _ } => {
                 // Will be implemented when transfer system is ready
                 Ok(Effect::None)
             }
-            GameEvent::ListPlayer { player_id, price } => {
+            GameEvent::ListPlayer { player_id: _, price: _ } => {
                 // Will be implemented when transfer system is ready
                 Ok(Effect::None)
             }

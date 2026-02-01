@@ -22,7 +22,9 @@ impl SettingsScreen {
         }
     }
 
-    pub fn render(&mut self, frame: &mut Frame, area: Rect, state: &GameState, _language: Language) {
+    pub fn render(&mut self, frame: &mut Frame, area: Rect, state: &GameState, language: Language) {
+        use crate::ui::i18n::{TranslationKey, t};
+
         let chunks = Layout::default()
             .direction(Direction::Vertical)
             .margin(5)
@@ -34,7 +36,8 @@ impl SettingsScreen {
             .split(area);
 
         // Title
-        let title = Paragraph::new("Settings")
+        let title_text = t(TranslationKey::Settings, language);
+        let title = Paragraph::new(title_text)
             .block(
                 Block::default()
                     .borders(Borders::ALL)
@@ -45,9 +48,15 @@ impl SettingsScreen {
 
         frame.render_widget(title, chunks[0]);
 
+        // Display current language
+        let language_name = match language {
+            Language::English => "English",
+            Language::Chinese => "中文",
+        };
+
         // Settings list
         let items = vec![
-            "Language: English".to_string(),
+            format!("Language: {}", language_name),
             format!("Match Mode: {:?}", state.match_mode_preference),
         ];
 
@@ -70,7 +79,9 @@ impl SettingsScreen {
         );
 
         // Help
-        let help = Paragraph::new("↑↓: Select | Enter: Toggle | Esc: Back")
+        let back_text = t(TranslationKey::Back, language);
+        let help_text = format!("↑↓: Select | Enter: Toggle | Esc: {}", back_text);
+        let help = Paragraph::new(help_text)
             .block(Block::default().borders(Borders::ALL))
             .alignment(Alignment::Center);
 
@@ -88,16 +99,30 @@ impl SettingsScreen {
                 None
             }
             KeyCode::Down => {
-                self.selected_index += 1;
+                // Only 2 settings items (0: Language, 1: Match Mode)
+                if self.selected_index < 1 {
+                    self.selected_index += 1;
+                }
                 None
             }
             KeyCode::Esc => Some(Screen::MainMenu),
             KeyCode::Enter => {
-                // Toggle setting (placeholder - would need state mutation)
+                // Return a special marker to indicate settings toggle
+                // We use Screen::MainMenu as a signal, but with different meaning based on selected_index
                 None
             }
             _ => None,
         }
+    }
+
+    /// Check if language toggle is requested (selected_index == 0 and Enter was pressed)
+    pub fn should_toggle_language(&self) -> bool {
+        self.selected_index == 0
+    }
+
+    /// Check if match mode toggle is requested (selected_index == 1 and Enter was pressed)
+    pub fn should_toggle_match_mode(&self) -> bool {
+        self.selected_index == 1
     }
 }
 
@@ -256,7 +281,7 @@ pub struct MainMenuScreen {
 }
 
 #[derive(Debug, Clone, Copy)]
-enum MenuAction {
+pub enum MenuAction {
     TeamManagement,
     Tactics,
     TransferMarket,
@@ -286,7 +311,9 @@ impl MainMenuScreen {
     }
 
     /// Render main menu
-    pub fn render(&mut self, frame: &mut Frame, area: Rect, state: &GameState, _language: Language) {
+    pub fn render(&mut self, frame: &mut Frame, area: Rect, state: &GameState, language: Language) {
+        use crate::ui::i18n::{TranslationKey, t};
+
         // Split into title and menu sections
         let chunks = Layout::default()
             .direction(Direction::Vertical)
@@ -326,7 +353,7 @@ impl MainMenuScreen {
                 Block::default()
                     .borders(Borders::ALL)
                     .border_style(Style::default().fg(Color::Green))
-                    .title("Main Menu"),
+                    .title(t(TranslationKey::MainMenu, language)),
             )
             .alignment(Alignment::Center)
             .wrap(Wrap { trim: true });
@@ -338,7 +365,7 @@ impl MainMenuScreen {
             .iter()
             .enumerate()
             .map(|(i, action)| {
-                let label = self.get_menu_label(*action);
+                let label = self.get_menu_label(*action, language);
                 let style = if i == self.selected_index {
                     Style::default()
                         .fg(Color::Yellow)
@@ -363,9 +390,13 @@ impl MainMenuScreen {
         frame.render_widget(menu_paragraph, chunks[1]);
 
         // Render help text
+        let quit_text = t(TranslationKey::Quit, language);
         let help_text = vec![
             Line::from(vec![
-                Span::styled("↑↓: Navigate | Enter: Select | q: Quit", Style::default().fg(Color::Gray)),
+                Span::styled(
+                    format!("↑↓: Navigate | Enter: Select | q: {}", quit_text),
+                    Style::default().fg(Color::Gray)
+                ),
             ]),
         ];
 
@@ -378,16 +409,18 @@ impl MainMenuScreen {
     }
 
     /// Get menu label for action
-    fn get_menu_label(&self, action: MenuAction) -> &str {
+    fn get_menu_label(&self, action: MenuAction, language: Language) -> &'static str {
+        use crate::ui::i18n::{TranslationKey, t};
+
         match action {
-            MenuAction::TeamManagement => "Team Management",
-            MenuAction::Tactics => "Tactics",
-            MenuAction::TransferMarket => "Transfer Market",
-            MenuAction::NextMatch => "Next Match",
-            MenuAction::LeagueTable => "League Table",
-            MenuAction::SaveLoad => "Save / Load",
-            MenuAction::Settings => "Settings",
-            MenuAction::ExitGame => "Exit Game",
+            MenuAction::TeamManagement => t(TranslationKey::TeamManagement, language),
+            MenuAction::Tactics => t(TranslationKey::Tactics, language),
+            MenuAction::TransferMarket => t(TranslationKey::TransferMarket, language),
+            MenuAction::NextMatch => t(TranslationKey::NextMatch, language),
+            MenuAction::LeagueTable => t(TranslationKey::LeagueTable, language),
+            MenuAction::SaveLoad => t(TranslationKey::SaveLoad, language),
+            MenuAction::Settings => t(TranslationKey::Settings, language),
+            MenuAction::ExitGame => t(TranslationKey::ExitGame, language),
         }
     }
 
@@ -677,7 +710,7 @@ impl MatchModeSelectionScreen {
             }
             KeyCode::Esc => Some(Screen::MainMenu),
             KeyCode::Enter => {
-                let mode = if self.selected_mode == 0 {
+                let _mode = if self.selected_mode == 0 {
                     MatchMode::Live
                 } else {
                     MatchMode::Quick
@@ -805,14 +838,14 @@ impl PlayerDetailScreen {
 /// Match result screen
 #[derive(Debug, Clone, Default)]
 pub struct MatchResultScreen {
-    match_id: String,
+    _match_id: String, // Stored for future use when implementing actual match data display
     selected_tab: usize, // 0: Overview, 1: Statistics, 2: Player Ratings
 }
 
 impl MatchResultScreen {
     pub fn new(match_id: String) -> Self {
         Self {
-            match_id,
+            _match_id: match_id,
             selected_tab: 0,
         }
     }

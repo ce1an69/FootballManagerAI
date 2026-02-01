@@ -1,5 +1,5 @@
 use crate::team::{Team, Player, MatchResult, MatchEvent, MatchMode, MatchStatistics, Position, PlayerMatchRating};
-use crate::ai::tactical::{infer_tactical_style, calculate_tactical_modifier, TacticalStyle};
+use crate::ai::tactical::{infer_tactical_style, calculate_tactical_modifier};
 use rand::Rng;
 use rand::seq::SliceRandom;
 
@@ -131,6 +131,7 @@ impl MatchSimulator {
     }
 
     /// Calculate score based on team strengths
+    #[allow(dead_code)]
     fn calculate_score(&mut self, home_strength: u16, away_strength: u16, rng: &mut rand::rngs::ThreadRng) -> (u8, u8) {
         let strength_diff = home_strength as i32 - away_strength as i32;
 

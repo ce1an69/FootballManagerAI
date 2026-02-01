@@ -1,4 +1,4 @@
-use crate::game::{GameState, Notification, NotificationType, NotificationPriority};
+use crate::game::{Notification, NotificationType, NotificationPriority};
 use uuid::Uuid;
 
 /// NotificationManager - Factory methods for creating game notifications

@@ -1,23 +1,6 @@
 use football_manager_ai::game::GameState;
 use football_manager_ai::game::init::{quick_start, load_game};
 use football_manager_ai::ui::TuiApp;
-use football_manager_ai::ui::{
-    MainMenuScreen,
-    SettingsScreen,
-    SaveLoadScreen,
-    LeagueTableScreen,
-    MatchModeSelectionScreen,
-    PlayerDetailScreen,
-    MatchResultScreen,
-    SeasonSummaryScreen,
-    MatchHistoryScreen,
-    NotificationsScreen,
-    TacticsScreen,
-    TransferMarketScreen,
-    TeamManagementScreen,
-    MatchLiveScreen,
-    FinanceReportScreen,
-};
 use football_manager_ai::data::SaveManager;
 use std::io;
 use ratatui::{
