@@ -218,7 +218,14 @@ mod tests {
     fn test_create_and_get_team() {
         let db = Database::in_memory().unwrap();
         db.run_migrations().unwrap();
-        let repo = SqliteTeamRepository::new(Arc::new(RwLock::new(db.conn)));
+        let conn = Arc::new(RwLock::new(db.conn));
+        let repo = SqliteTeamRepository::new(conn.clone());
+
+        // Create league first (required by foreign key constraint)
+        conn.write().unwrap().execute(
+            "INSERT INTO leagues (id, name, current_round, total_rounds) VALUES (?, ?, ?, ?)",
+            rusqlite::params!["league1", "League 1", 0, 38],
+        ).unwrap();
 
         let team = Team::new("team1".to_string(), "Test Team".to_string(), "league1".to_string(), 1000000);
 
@@ -234,7 +241,14 @@ mod tests {
     fn test_get_all_teams() {
         let db = Database::in_memory().unwrap();
         db.run_migrations().unwrap();
-        let repo = SqliteTeamRepository::new(Arc::new(RwLock::new(db.conn)));
+        let conn = Arc::new(RwLock::new(db.conn));
+        let repo = SqliteTeamRepository::new(conn.clone());
+
+        // Create league first
+        conn.write().unwrap().execute(
+            "INSERT INTO leagues (id, name, current_round, total_rounds) VALUES (?, ?, ?, ?)",
+            rusqlite::params!["league1", "League 1", 0, 38],
+        ).unwrap();
 
         let team1 = Team::new("team1".to_string(), "Team A".to_string(), "league1".to_string(), 1000000);
         let team2 = Team::new("team2".to_string(), "Team B".to_string(), "league1".to_string(), 2000000);
@@ -250,7 +264,14 @@ mod tests {
     fn test_update_team() {
         let db = Database::in_memory().unwrap();
         db.run_migrations().unwrap();
-        let repo = SqliteTeamRepository::new(Arc::new(RwLock::new(db.conn)));
+        let conn = Arc::new(RwLock::new(db.conn));
+        let repo = SqliteTeamRepository::new(conn.clone());
+
+        // Create league first
+        conn.write().unwrap().execute(
+            "INSERT INTO leagues (id, name, current_round, total_rounds) VALUES (?, ?, ?, ?)",
+            rusqlite::params!["league1", "League 1", 0, 38],
+        ).unwrap();
 
         let mut team = Team::new("team1".to_string(), "Test Team".to_string(), "league1".to_string(), 1000000);
         repo.create(&team).unwrap();
@@ -268,7 +289,14 @@ mod tests {
     fn test_delete_team() {
         let db = Database::in_memory().unwrap();
         db.run_migrations().unwrap();
-        let repo = SqliteTeamRepository::new(Arc::new(RwLock::new(db.conn)));
+        let conn = Arc::new(RwLock::new(db.conn));
+        let repo = SqliteTeamRepository::new(conn.clone());
+
+        // Create league first
+        conn.write().unwrap().execute(
+            "INSERT INTO leagues (id, name, current_round, total_rounds) VALUES (?, ?, ?, ?)",
+            rusqlite::params!["league1", "League 1", 0, 38],
+        ).unwrap();
 
         let team = Team::new("team1".to_string(), "Test Team".to_string(), "league1".to_string(), 1000000);
         repo.create(&team).unwrap();
@@ -283,7 +311,18 @@ mod tests {
     fn test_get_by_league() {
         let db = Database::in_memory().unwrap();
         db.run_migrations().unwrap();
-        let repo = SqliteTeamRepository::new(Arc::new(RwLock::new(db.conn)));
+        let conn = Arc::new(RwLock::new(db.conn));
+        let repo = SqliteTeamRepository::new(conn.clone());
+
+        // Create leagues first
+        conn.write().unwrap().execute(
+            "INSERT INTO leagues (id, name, current_round, total_rounds) VALUES (?, ?, ?, ?)",
+            rusqlite::params!["league1", "League 1", 0, 38],
+        ).unwrap();
+        conn.write().unwrap().execute(
+            "INSERT INTO leagues (id, name, current_round, total_rounds) VALUES (?, ?, ?, ?)",
+            rusqlite::params!["league2", "League 2", 0, 38],
+        ).unwrap();
 
         let team1 = Team::new("team1".to_string(), "Team A".to_string(), "league1".to_string(), 1000000);
         let team2 = Team::new("team2".to_string(), "Team B".to_string(), "league1".to_string(), 2000000);
