@@ -3,18 +3,18 @@
 ## Phase 1: 游戏状态
 
 ### Task 1.1: 枚举定义
-- [ ] 定义 `Screen` enum
-- [ ] 定义 `Difficulty` enum
-- [ ] 添加所有变体
+- [x] 定义 `Screen` enum
+- [x] 定义 `Difficulty` enum
+- [x] 添加所有变体
 
 **Acceptance Criteria**: 枚举完整
 
 ---
 
 ### Task 1.2: GameState 结构
-- [ ] 定义 `GameState` struct
-- [ ] 添加所有必需字段
-- [ ] 实现构造函数 `new()`
+- [x] 定义 `GameState` struct
+- [x] 添加所有必需字段
+- [x] 实现构造函数 `new()`
 
 **Acceptance Criteria**:
 ```rust
@@ -25,10 +25,10 @@ assert_eq!(state.current_screen, Screen::MainMenu);
 ---
 
 ### Task 1.3: GameState 辅助方法
-- [ ] 实现 `get_player_team()`
-- [ ] 实现 `get_team()`
-- [ ] 实现 `navigate_to()`
-- [ ] 实现 `go_back()`
+- [x] 实现 `get_player_team()`
+- [x] 实现 `get_team()`
+- [x] 实现 `navigate_to()`
+- [x] 实现 `go_back()`
 
 **Acceptance Criteria**:
 ```rust
@@ -41,9 +41,9 @@ assert_eq!(state.current_screen, Screen::TeamManagement);
 ## Phase 2: 游戏流程控制
 
 ### Task 2.1: 比赛流程
-- [ ] 实现 `advance_to_next_match()`
-- [ ] 查找玩家球队的下一场比赛
-- [ ] 返回比赛信息
+- [x] 实现 `advance_to_next_match()`
+- [x] 查找玩家球队的下一场比赛
+- [x] 返回比赛信息
 
 **Acceptance Criteria**:
 ```rust
@@ -54,18 +54,18 @@ assert!(next_match.opponent.name.len() > 0);
 ---
 
 ### Task 2.2: 比赛后更新
-- [ ] 实现 `update_after_match()`
-- [ ] 更新联赛轮次
-- [ ] 标记比赛已打
-- [ ] 更新球队统计
+- [x] 实现 `update_after_match()`
+- [x] 更新联赛轮次
+- [x] 标记比赛已打
+- [x] 更新球队统计
 
 **Acceptance Criteria**: 比赛后状态正确更新
 
 ---
 
 ### Task 2.3: 轮次判断
-- [ ] 实现 `is_last_match_of_round()`
-- [ ] 实现 `mark_match_as_played()`
+- [x] 实现 `is_last_match_of_round()`
+- [x] 实现 `mark_match_as_played()`
 
 **Acceptance Criteria**: 轮次判断正确
 
@@ -74,25 +74,25 @@ assert!(next_match.opponent.name.len() > 0);
 ## Phase 3: 事件系统
 
 ### Task 3.1: 事件定义
-- [ ] 定义 `GameEvent` enum
-- [ ] 添加所有事件变体
+- [x] 定义 `GameEvent` enum
+- [x] 添加所有事件变体
 
 **Acceptance Criteria**: 事件类型完整
 
 ---
 
 ### Task 3.2: 效果定义
-- [ ] 定义 `Effect` enum
-- [ ] 定义所有副作用类型
+- [x] 定义 `Effect` enum
+- [x] 定义所有副作用类型
 
 **Acceptance Criteria**: Effect 类型完整
 
 ---
 
 ### Task 3.3: 事件处理器
-- [ ] 定义 `EventHandler` struct
-- [ ] 实现 `handle_event()`
-- [ ] 处理所有事件类型
+- [x] 定义 `EventHandler` struct
+- [x] 实现 `handle_event()`
+- [x] 处理所有事件类型
 
 **Acceptance Criteria**:
 ```rust
@@ -103,8 +103,8 @@ assert_eq!(effect, Effect::Render);
 ---
 
 ### Task 3.4: 输入转换
-- [ ] 实现 `convert_input_to_event()`
-- [ ] 将TUI输入转换为事件
+- [x] 实现 `convert_input_to_event()`
+- [x] 将TUI输入转换为事件
 
 **Acceptance Criteria**: 输入正确转换为事件
 
@@ -113,17 +113,17 @@ assert_eq!(effect, Effect::Render);
 ## Phase 4: 游戏循环
 
 ### Task 4.1: GameLoop 结构
-- [ ] 定义 `GameLoop` struct
-- [ ] 实现构造函数
+- [x] 定义 `GameLoop` struct
+- [x] 实现构造函数
 
 **Acceptance Criteria**: GameLoop 可以创建
 
 ---
 
 ### Task 4.2: 主循环
-- [ ] 实现 `run()` 方法
-- [ ] 实现渲染 → 输入 → 事件 → 副作用循环
-- [ ] 处理退出
+- [x] 实现 `run()` 方法
+- [x] 实现渲染 → 输入 → 事件 → 副作用循环
+- [x] 处理退出
 
 **Acceptance Criteria**: 游戏循环正常运行
 
@@ -132,18 +132,18 @@ assert_eq!(effect, Effect::Render);
 ## Phase 5: 存档系统
 
 ### Task 5.1: 存档结构
-- [ ] 定义 `SaveGame` struct
-- [ ] 定义 `SaveMetadata` struct
-- [ ] 添加 `Serialize`/`Deserialize`
+- [x] 定义 `SaveGame` struct
+- [x] 定义 `SaveMetadata` struct
+- [x] 添加 `Serialize`/`Deserialize`
 
 **Acceptance Criteria**: 结构可以序列化
 
 ---
 
 ### Task 5.2: 保存功能
-- [ ] 实现 `save()` 方法
-- [ ] 保存到数据库
-- [ ] 生成元数据
+- [x] 实现 `save()` 方法
+- [x] 保存到数据库
+- [x] 生成元数据
 
 **Acceptance Criteria**:
 ```rust
@@ -154,9 +154,9 @@ state.save(1)?;
 ---
 
 ### Task 5.3: 加载功能
-- [ ] 实现 `load()` 静态方法
-- [ ] 从数据库加载
-- [ ] 恢复GameState
+- [x] 实现 `load()` 静态方法
+- [x] 从数据库加载
+- [x] 恢复GameState
 
 **Acceptance Criteria**:
 ```rust
@@ -167,8 +167,8 @@ let state = GameState::load(1)?;
 ---
 
 ### Task 5.4: 存档列表
-- [ ] 实现 `list_saves()`
-- [ ] 返回可用存档信息
+- [x] 实现 `list_saves()`
+- [x] 返回可用存档信息
 
 **Acceptance Criteria**: 能列出所有存档
 
@@ -177,10 +177,10 @@ let state = GameState::load(1)?;
 ## Phase 6: 游戏初始化
 
 ### Task 6.1: 新游戏入口
-- [ ] 实现 `start_new_game()`
-- [ ] 初始化数据库
-- [ ] 生成游戏数据
-- [ ] 创建GameState
+- [x] 实现 `start_new_game()`
+- [x] 初始化数据库
+- [x] 生成游戏数据
+- [x] 创建GameState
 
 **Acceptance Criteria**:
 ```rust
@@ -191,8 +191,8 @@ assert!(state.is_new_game);
 ---
 
 ### Task 6.2: 读档入口
-- [ ] 实现 `load_game()`
-- [ ] 加载指定存档
+- [x] 实现 `load_game()`
+- [x] 加载指定存档
 
 **Acceptance Criteria**: 能正确加载存档
 
@@ -201,8 +201,8 @@ assert!(state.is_new_game);
 ## Phase 7: 难度系统
 
 ### Task 7.1: 难度设置
-- [ ] 实现 `Difficulty::budget_multiplier()`
-- [ ] 实现 `Difficulty::ai_intelligence()`
+- [x] 实现 `Difficulty::budget_multiplier()`
+- [x] 实现 `Difficulty::ai_intelligence()`
 
 **Acceptance Criteria**:
 ```rust
@@ -215,8 +215,8 @@ assert_eq!(multiplier, 1.5);
 ## Phase 8: 模块导出
 
 ### Task 8.1: mod.rs
-- [ ] 导出所有公共类型
-- [ ] 组织模块
+- [x] 导出所有公共类型
+- [x] 组织模块
 
 **Acceptance Criteria**: 其他模块可以正常使用
 
@@ -225,17 +225,17 @@ assert_eq!(multiplier, 1.5);
 ## Phase 9: 测试
 
 ### Task 9.1: 单元测试
-- [ ] 测试GameState创建
-- [ ] 测试导航
-- [ ] 测试事件处理
-- [ ] 测试存档加载
+- [x] 测试GameState创建
+- [x] 测试导航
+- [x] 测试事件处理
+- [x] 测试存档加载
 
 ---
 
 ### Task 9.2: 集成测试
-- [ ] 测试完整新游戏流程
-- [ ] 测试存档循环
-- [ ] 测试多场比赛流程
+- [x] 测试完整新游戏流程
+- [x] 测试存档循环
+- [x] 测试多场比赛流程
 
 ---
 
