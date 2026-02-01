@@ -69,6 +69,7 @@ struct Choice {
 ///
 /// This client handles communication with LLM APIs using the OpenAI-compatible
 /// chat completions format.
+#[derive(Clone)]
 pub struct LLMClient {
     client: Client,
     config: LlmConfig,
