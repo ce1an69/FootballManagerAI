@@ -411,7 +411,7 @@ mod tests {
     fn test_create_and_get_player() {
         let db = Database::in_memory().unwrap();
         db.run_migrations().unwrap();
-        let conn = Arc::new(RwLock::new(db.conn));
+        let conn = db.conn.clone();
         let repo = SqlitePlayerRepository::new(conn.clone());
 
         // Create league first (required by foreign key constraint)
@@ -440,7 +440,7 @@ mod tests {
     fn test_get_by_team() {
         let db = Database::in_memory().unwrap();
         db.run_migrations().unwrap();
-        let conn = Arc::new(RwLock::new(db.conn));
+        let conn = db.conn.clone();
         let repo = SqlitePlayerRepository::new(conn.clone());
 
         // Create league first
@@ -469,7 +469,7 @@ mod tests {
     fn test_update_player() {
         let db = Database::in_memory().unwrap();
         db.run_migrations().unwrap();
-        let conn = Arc::new(RwLock::new(db.conn));
+        let conn = db.conn.clone();
         let repo = SqlitePlayerRepository::new(conn.clone());
 
         // Create league first
@@ -500,7 +500,7 @@ mod tests {
     fn test_delete_player() {
         let db = Database::in_memory().unwrap();
         db.run_migrations().unwrap();
-        let conn = Arc::new(RwLock::new(db.conn));
+        let conn = db.conn.clone();
         let repo = SqlitePlayerRepository::new(conn.clone());
 
         // Create league first
@@ -528,7 +528,7 @@ mod tests {
     fn test_get_free_agents() {
         let db = Database::in_memory().unwrap();
         db.run_migrations().unwrap();
-        let conn = Arc::new(RwLock::new(db.conn));
+        let conn = db.conn.clone();
         let repo = SqlitePlayerRepository::new(conn.clone());
 
         // Create league first

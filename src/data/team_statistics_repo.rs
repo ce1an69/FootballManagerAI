@@ -116,7 +116,7 @@ mod tests {
     fn test_create_and_get_statistics() {
         let db = Database::in_memory().unwrap();
         db.run_migrations().unwrap();
-        let conn = Arc::new(RwLock::new(db.conn));
+        let conn = db.conn.clone();
         let repo = SqliteTeamStatisticsRepository::new(conn.clone());
 
         repo.create("team1").unwrap();
@@ -131,7 +131,7 @@ mod tests {
     fn test_update_statistics() {
         let db = Database::in_memory().unwrap();
         db.run_migrations().unwrap();
-        let conn = Arc::new(RwLock::new(db.conn));
+        let conn = db.conn.clone();
         let repo = SqliteTeamStatisticsRepository::new(conn.clone());
 
         repo.create("team1").unwrap();
@@ -160,7 +160,7 @@ mod tests {
     fn test_get_league_standings() {
         let db = Database::in_memory().unwrap();
         db.run_migrations().unwrap();
-        let conn = Arc::new(RwLock::new(db.conn));
+        let conn = db.conn.clone();
         let repo = SqliteTeamStatisticsRepository::new(conn.clone());
 
         // Create league

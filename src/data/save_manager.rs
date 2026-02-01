@@ -103,25 +103,25 @@ impl SaveManager {
         let db = Database::new(db_path.to_str().unwrap())?;
 
         // Read from game_metadata table
-        let team_name = db.conn.query_row(
+        let team_name = db.conn.read().unwrap().query_row(
             "SELECT value FROM game_metadata WHERE key = 'player_name'",
             [],
             |row| row.get::<_, String>(0),
         ).unwrap_or_else(|_| "Unknown".to_string());
 
-        let date = db.conn.query_row(
+        let date = db.conn.read().unwrap().query_row(
             "SELECT value FROM game_metadata WHERE key = 'game_date'",
             [],
             |row| row.get::<_, String>(0),
         ).unwrap_or_else(|_| "Unknown".to_string());
 
-        let season = db.conn.query_row(
+        let season = db.conn.read().unwrap().query_row(
             "SELECT value FROM game_metadata WHERE key = 'season'",
             [],
             |row| row.get::<_, String>(0),
         ).unwrap_or_else(|_| "Unknown".to_string());
 
-        let saved_at: u64 = db.conn.query_row(
+        let saved_at: u64 = db.conn.read().unwrap().query_row(
             "SELECT value FROM game_metadata WHERE key = 'saved_at'",
             [],
             |row| {
@@ -130,7 +130,7 @@ impl SaveManager {
             },
         ).unwrap_or(0);
 
-        let slot: u8 = db.conn.query_row(
+        let slot: u8 = db.conn.read().unwrap().query_row(
             "SELECT value FROM game_metadata WHERE key = 'save_slot'",
             [],
             |row| {
@@ -139,7 +139,7 @@ impl SaveManager {
             },
         ).unwrap_or(0);
 
-        let play_time_hours: u32 = db.conn.query_row(
+        let play_time_hours: u32 = db.conn.read().unwrap().query_row(
             "SELECT value FROM game_metadata WHERE key = 'play_time'",
             [],
             |row| {

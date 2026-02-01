@@ -185,7 +185,7 @@ mod tests {
     fn test_save_and_get_lineup() {
         let db = Database::in_memory().unwrap();
         db.run_migrations().unwrap();
-        let conn = Arc::new(RwLock::new(db.conn));
+        let conn = db.conn.clone();
         let repo = SqliteLineupRepository::new(conn.clone());
 
         // Create league and team
@@ -224,7 +224,7 @@ mod tests {
     fn test_bench() {
         let db = Database::in_memory().unwrap();
         db.run_migrations().unwrap();
-        let conn = Arc::new(RwLock::new(db.conn));
+        let conn = db.conn.clone();
         let repo = SqliteLineupRepository::new(conn.clone());
 
         // Create league and team
@@ -277,7 +277,7 @@ mod tests {
     fn test_clear_lineup() {
         let db = Database::in_memory().unwrap();
         db.run_migrations().unwrap();
-        let conn = Arc::new(RwLock::new(db.conn));
+        let conn = db.conn.clone();
         let repo = SqliteLineupRepository::new(conn.clone());
 
         // Create league and team

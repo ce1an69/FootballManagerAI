@@ -117,7 +117,7 @@ mod tests {
     fn test_add_and_get_market_listing() {
         let db = Database::in_memory().unwrap();
         db.run_migrations().unwrap();
-        let conn = Arc::new(RwLock::new(db.conn));
+        let conn = db.conn.clone();
         let player_repo = Arc::new(SqlitePlayerRepository::new(conn.clone())) as Arc<dyn PlayerRepository>;
         let repo = SqliteTransferMarketRepository::new(conn.clone(), player_repo);
 
@@ -152,7 +152,7 @@ mod tests {
     fn test_remove_from_market() {
         let db = Database::in_memory().unwrap();
         db.run_migrations().unwrap();
-        let conn = Arc::new(RwLock::new(db.conn));
+        let conn = db.conn.clone();
         let player_repo = Arc::new(SqlitePlayerRepository::new(conn.clone())) as Arc<dyn PlayerRepository>;
         let repo = SqliteTransferMarketRepository::new(conn.clone(), player_repo);
 
@@ -187,7 +187,7 @@ mod tests {
     fn test_update_price() {
         let db = Database::in_memory().unwrap();
         db.run_migrations().unwrap();
-        let conn = Arc::new(RwLock::new(db.conn));
+        let conn = db.conn.clone();
         let player_repo = Arc::new(SqlitePlayerRepository::new(conn.clone())) as Arc<dyn PlayerRepository>;
         let repo = SqliteTransferMarketRepository::new(conn.clone(), player_repo);
 
@@ -223,7 +223,7 @@ mod tests {
     fn test_get_market_players() {
         let db = Database::in_memory().unwrap();
         db.run_migrations().unwrap();
-        let conn = Arc::new(RwLock::new(db.conn));
+        let conn = db.conn.clone();
         let player_repo = Arc::new(SqlitePlayerRepository::new(conn.clone())) as Arc<dyn PlayerRepository>;
         let repo = SqliteTransferMarketRepository::new(conn.clone(), player_repo);
 

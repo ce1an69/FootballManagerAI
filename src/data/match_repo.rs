@@ -236,7 +236,7 @@ mod tests {
     fn test_save_and_get_match() {
         let db = Database::in_memory().unwrap();
         db.run_migrations().unwrap();
-        let conn = Arc::new(RwLock::new(db.conn));
+        let conn = db.conn.clone();
         let repo = SqliteMatchRepository::new(conn.clone());
 
         // Create league and teams
@@ -271,7 +271,7 @@ mod tests {
     fn test_get_by_team() {
         let db = Database::in_memory().unwrap();
         db.run_migrations().unwrap();
-        let conn = Arc::new(RwLock::new(db.conn));
+        let conn = db.conn.clone();
         let repo = SqliteMatchRepository::new(conn.clone());
 
         // Create league and teams
@@ -307,7 +307,7 @@ mod tests {
     fn test_get_by_league() {
         let db = Database::in_memory().unwrap();
         db.run_migrations().unwrap();
-        let conn = Arc::new(RwLock::new(db.conn));
+        let conn = db.conn.clone();
         let repo = SqliteMatchRepository::new(conn.clone());
 
         // Create league and teams

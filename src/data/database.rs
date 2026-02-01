@@ -1,5 +1,11 @@
-use rusqlite::{Connection, Result as SqliteResult};
+use rusqlite::Connection;
+use std::sync::{Arc, RwLock};
+use std::path::Path;
 use thiserror::Error;
+
+// Import repository implementations using the re-exported types from mod.rs
+// Since database.rs is part of the data module, we can use the re-exports directly
+// We'll use the fully qualified paths in the method signatures instead
 
 /// Database error types
 #[derive(Debug, Error)]
@@ -21,11 +27,14 @@ pub enum DatabaseError {
 
     #[error("SQLite error: {0}")]
     Sqlite(#[from] rusqlite::Error),
+
+    #[error("IO error: {0}")]
+    IoError(#[from] std::io::Error),
 }
 
 /// Database connection manager
 pub struct Database {
-    pub conn: Connection,
+    pub conn: Arc<RwLock<Connection>>,
 }
 
 impl Database {
@@ -38,7 +47,7 @@ impl Database {
         conn.execute("PRAGMA foreign_keys = ON", [])
             .map_err(|e| DatabaseError::QueryError(e.to_string()))?;
 
-        Ok(Self { conn })
+        Ok(Self { conn: Arc::new(RwLock::new(conn)) })
     }
 
     /// Create an in-memory database (for testing)
@@ -50,7 +59,7 @@ impl Database {
         conn.execute("PRAGMA foreign_keys = ON", [])
             .map_err(|e| DatabaseError::QueryError(e.to_string()))?;
 
-        Ok(Self { conn })
+        Ok(Self { conn: Arc::new(RwLock::new(conn)) })
     }
 
     /// Run database migrations
@@ -63,7 +72,7 @@ impl Database {
     /// Create all database tables
     fn create_tables(&self) -> Result<(), DatabaseError> {
         // Leagues table
-        self.conn.execute(
+        self.conn.write().unwrap().execute(
             "CREATE TABLE IF NOT EXISTS leagues (
                 id TEXT PRIMARY KEY,
                 name TEXT NOT NULL,
@@ -74,7 +83,7 @@ impl Database {
         ).map_err(|e| DatabaseError::MigrationError(e.to_string()))?;
 
         // Teams table
-        self.conn.execute(
+        self.conn.write().unwrap().execute(
             "CREATE TABLE IF NOT EXISTS teams (
                 id TEXT PRIMARY KEY,
                 name TEXT NOT NULL,
@@ -91,7 +100,7 @@ impl Database {
         ).map_err(|e| DatabaseError::MigrationError(e.to_string()))?;
 
         // Players table
-        self.conn.execute(
+        self.conn.write().unwrap().execute(
             "CREATE TABLE IF NOT EXISTS players (
                 id TEXT PRIMARY KEY,
                 team_id TEXT,
@@ -165,7 +174,7 @@ impl Database {
         ).map_err(|e| DatabaseError::MigrationError(e.to_string()))?;
 
         // Matches table
-        self.conn.execute(
+        self.conn.write().unwrap().execute(
             "CREATE TABLE IF NOT EXISTS matches (
                 id TEXT PRIMARY KEY,
                 league_id TEXT NOT NULL,
@@ -203,7 +212,7 @@ impl Database {
         ).map_err(|e| DatabaseError::MigrationError(e.to_string()))?;
 
         // Transfer market table
-        self.conn.execute(
+        self.conn.write().unwrap().execute(
             "CREATE TABLE IF NOT EXISTS transfer_market (
                 player_id TEXT PRIMARY KEY,
                 asking_price INTEGER NOT NULL,
@@ -215,7 +224,7 @@ impl Database {
         ).map_err(|e| DatabaseError::MigrationError(e.to_string()))?;
 
         // Game metadata table
-        self.conn.execute(
+        self.conn.write().unwrap().execute(
             "CREATE TABLE IF NOT EXISTS game_metadata (
                 key TEXT PRIMARY KEY,
                 value TEXT NOT NULL
@@ -224,7 +233,7 @@ impl Database {
         ).map_err(|e| DatabaseError::MigrationError(e.to_string()))?;
 
         // Scheduled matches table
-        self.conn.execute(
+        self.conn.write().unwrap().execute(
             "CREATE TABLE IF NOT EXISTS scheduled_matches (
                 id TEXT PRIMARY KEY,
                 league_id TEXT NOT NULL,
@@ -240,7 +249,7 @@ impl Database {
         ).map_err(|e| DatabaseError::MigrationError(e.to_string()))?;
 
         // Lineups table
-        self.conn.execute(
+        self.conn.write().unwrap().execute(
             "CREATE TABLE IF NOT EXISTS lineups (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 team_id TEXT NOT NULL,
@@ -258,7 +267,7 @@ impl Database {
         ).map_err(|e| DatabaseError::MigrationError(e.to_string()))?;
 
         // Team statistics table (no foreign key to avoid circular dependency)
-        self.conn.execute(
+        self.conn.write().unwrap().execute(
             "CREATE TABLE IF NOT EXISTS team_statistics (
                 team_id TEXT PRIMARY KEY,
                 matches_played INTEGER DEFAULT 0,
@@ -275,6 +284,55 @@ impl Database {
 
         Ok(())
     }
+
+    // Repository factory methods
+
+    /// Get TeamRepository instance
+    pub fn team_repo(&self) -> crate::data::SqliteTeamRepository {
+        crate::data::SqliteTeamRepository::new(self.conn.clone())
+    }
+
+    /// Get PlayerRepository instance
+    pub fn player_repo(&self) -> crate::data::SqlitePlayerRepository {
+        crate::data::SqlitePlayerRepository::new(self.conn.clone())
+    }
+
+    /// Get LeagueRepository instance
+    pub fn league_repo(&self) -> crate::data::SqliteLeagueRepository {
+        crate::data::SqliteLeagueRepository::new(self.conn.clone())
+    }
+
+    /// Get MatchRepository instance
+    pub fn match_repo(&self) -> crate::data::SqliteMatchRepository {
+        crate::data::SqliteMatchRepository::new(self.conn.clone())
+    }
+
+    /// Get ScheduledMatchRepository instance
+    pub fn scheduled_match_repo(&self) -> crate::data::SqliteScheduledMatchRepository {
+        crate::data::SqliteScheduledMatchRepository::new(self.conn.clone())
+    }
+
+    /// Get LineupRepository instance
+    pub fn lineup_repo(&self) -> crate::data::SqliteLineupRepository {
+        crate::data::SqliteLineupRepository::new(self.conn.clone())
+    }
+
+    /// Get TeamStatisticsRepository instance
+    pub fn team_statistics_repo(&self) -> crate::data::SqliteTeamStatisticsRepository {
+        crate::data::SqliteTeamStatisticsRepository::new(self.conn.clone())
+    }
+
+    /// Get TransferMarketRepository instance
+    pub fn transfer_market_repo(&self) -> crate::data::SqliteTransferMarketRepository {
+        // TransferMarketRepository needs PlayerRepository as dependency
+        let player_repo = std::sync::Arc::new(self.player_repo()) as std::sync::Arc<dyn crate::data::PlayerRepository>;
+        crate::data::SqliteTransferMarketRepository::new(self.conn.clone(), player_repo)
+    }
+
+    /// Get SaveManager instance
+    pub fn save_manager(&self) -> crate::data::SaveManager {
+        crate::data::SaveManager::new(std::path::PathBuf::from("saves"))
+    }
 }
 
 #[cfg(test)]
@@ -285,7 +343,7 @@ mod tests {
     fn test_in_memory_database() {
         let db = Database::in_memory().unwrap();
         // Test that database was created successfully by querying
-        let result: Result<i64, _> = db.conn.query_row("SELECT 1", [], |row| row.get(0));
+        let result: Result<i64, _> = db.conn.read().unwrap().query_row("SELECT 1", [], |row| row.get(0));
         assert!(result.is_ok());
         assert_eq!(result.unwrap(), 1);
     }
@@ -296,12 +354,12 @@ mod tests {
         db.run_migrations().unwrap();
 
         // Check if tables exist
-        let tables: Vec<String> = db.conn
+        let tables: Vec<String> = db.conn.read().unwrap()
             .prepare("SELECT name FROM sqlite_master WHERE type='table'")
             .unwrap()
             .query_map([], |row| row.get(0))
             .unwrap()
-            .collect::<SqliteResult<Vec<_>>>()
+            .collect::<Result<Vec<_>, _>>()
             .unwrap();
 
         assert!(tables.contains(&"leagues".to_string()));

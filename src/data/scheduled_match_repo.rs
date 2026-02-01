@@ -138,7 +138,7 @@ mod tests {
     fn test_create_and_get_scheduled_match() {
         let db = Database::in_memory().unwrap();
         db.run_migrations().unwrap();
-        let conn = Arc::new(RwLock::new(db.conn));
+        let conn = db.conn.clone();
         let repo = SqliteScheduledMatchRepository::new(conn.clone());
 
         // Create league
@@ -175,7 +175,7 @@ mod tests {
     fn test_get_by_league() {
         let db = Database::in_memory().unwrap();
         db.run_migrations().unwrap();
-        let conn = Arc::new(RwLock::new(db.conn));
+        let conn = db.conn.clone();
         let repo = SqliteScheduledMatchRepository::new(conn.clone());
 
         // Create leagues
@@ -230,7 +230,7 @@ mod tests {
     fn test_get_by_round() {
         let db = Database::in_memory().unwrap();
         db.run_migrations().unwrap();
-        let conn = Arc::new(RwLock::new(db.conn));
+        let conn = db.conn.clone();
         let repo = SqliteScheduledMatchRepository::new(conn.clone());
 
         // Create league
@@ -275,7 +275,7 @@ mod tests {
     fn test_mark_as_played() {
         let db = Database::in_memory().unwrap();
         db.run_migrations().unwrap();
-        let conn = Arc::new(RwLock::new(db.conn));
+        let conn = db.conn.clone();
         let repo = SqliteScheduledMatchRepository::new(conn.clone());
 
         // Create league
@@ -307,7 +307,7 @@ mod tests {
     fn test_delete_by_league() {
         let db = Database::in_memory().unwrap();
         db.run_migrations().unwrap();
-        let conn = Arc::new(RwLock::new(db.conn));
+        let conn = db.conn.clone();
         let repo = SqliteScheduledMatchRepository::new(conn.clone());
 
         // Create leagues
