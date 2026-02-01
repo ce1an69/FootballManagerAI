@@ -4,7 +4,7 @@ mod state;
 mod events;
 mod r#loop;
 mod flow;
-mod init;
+pub mod init;
 mod save;
 
 // Re-exports

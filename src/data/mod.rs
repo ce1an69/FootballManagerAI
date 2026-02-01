@@ -14,6 +14,9 @@ mod transfer_history_repo;
 mod save_manager;
 mod indexes;
 
+#[cfg(test)]
+mod integration_tests;
+
 // Re-exports
 pub use database::{Database, DatabaseError};
 pub use repository::{
