@@ -1,4 +1,4 @@
-use crate::game::{GameState, Screen, GameDate};
+use crate::game::{GameState, Screen, GameDate, NotificationType, NotificationPriority};
 use crate::team::{League, MatchResult, Team};
 use crate::data::{
     Database, ScheduledMatchData, ScheduledMatchRepository,
@@ -57,6 +57,11 @@ pub fn advance_to_next_match(
     // Advance date to match day
     while !is_match_day(&game_state.current_date, &next_match) {
         game_state.advance_time();
+
+        // Check for expiring contracts on the first day of each month
+        if game_state.current_date.day == 1 {
+            check_and_notify_expiring_contracts(game_state, database)?;
+        }
     }
 
     // Navigate to match mode selection
@@ -339,6 +344,53 @@ fn handle_season_end(
     game_state.navigate_to(Screen::SeasonSummary {
         season: game_state.current_date.season_string(),
     });
+
+    Ok(())
+}
+
+/// Check for expiring contracts and create notifications
+fn check_and_notify_expiring_contracts(
+    game_state: &mut GameState,
+    database: &Database,
+) -> Result<(), MatchFlowError> {
+    // Get players from player's team
+    let player_repo = database.player_repo();
+    let players = player_repo.get_by_team(&game_state.player_team_id)?;
+
+    // Check for contracts expiring within 1 month
+    for player in players {
+        if player.contract_years <= 1 {
+            let urgency = if player.contract_years == 0 {
+                NotificationPriority::Urgent
+            } else {
+                NotificationPriority::High
+            };
+
+            let message = if player.contract_years == 0 {
+                format!("{}'s contract has expired! Age: {}, Ability: {}",
+                    player.name,
+                    player.age,
+                    player.current_ability
+                )
+            } else {
+                format!("{}'s contract expires in {} month{}. Age: {}, Ability: {}, Wage: {}",
+                    player.name,
+                    player.contract_years,
+                    if player.contract_years == 1 { "" } else { "s" },
+                    player.age,
+                    player.current_ability,
+                    player.wage
+                )
+            };
+
+            game_state.add_notification(
+                "Contract Expiring".to_string(),
+                message,
+                NotificationType::Contract,
+                urgency,
+            );
+        }
+    }
 
     Ok(())
 }
