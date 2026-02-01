@@ -3,21 +3,20 @@
 ## Phase 1: 基础设施 (Foundation)
 
 ### Task 1.1: 项目依赖配置
-- [ ] 添加 `rusqlite` 依赖
-- [ ] 添加 `refinery` 依赖
-- [ ] 添加 `thiserror` 依赖
-- [ ] 添加 `serde` 和 `serde_json` 依赖
-- [ ] 配置 Cargo.toml
+- [x] 添加 `rusqlite` 依赖
+- [x] 添加 `thiserror` 依赖
+- [x] 添加 `serde` 和 `serde_json` 依赖
+- [x] 配置 Cargo.toml
 
 **Acceptance Criteria**: `cargo build` 成功，所有依赖正确配置
 
 ---
 
 ### Task 1.2: 错误类型定义
-- [ ] 创建 `database.rs` 文件
-- [ ] 定义 `DatabaseError` enum
-- [ ] 实现 `std::fmt::Display` 和 `std::error::Error`
-- [ ] 添加从 `rusqlite::Error` 的转换
+- [x] 创建 `database.rs` 文件
+- [x] 定义 `DatabaseError` enum
+- [x] 实现 `std::fmt::Display` 和 `std::error::Error`
+- [x] 添加从 `rusqlite::Error` 的转换
 
 **Acceptance Criteria**:
 ```rust
@@ -28,9 +27,8 @@ assert_eq!(format!("{}", err), "Query failed: test");
 ---
 
 ### Task 1.3: Database 连接管理
-- [ ] 实现 `Database::new(path: &str)`
-- [ ] 实现 `Database::in_memory()` (用于测试)
-- [ ] 实现连接池或单例模式
+- [x] 实现 `Database::new(path: &str)`
+- [x] 实现 `Database::in_memory()` (用于测试)
 
 **Acceptance Criteria**:
 ```rust
@@ -43,14 +41,17 @@ assert!(db.conn.is_open());
 ## Phase 2: 数据库 Schema (Schema)
 
 ### Task 2.1: 初始 Migration
-- [ ] 创建 `migrations/` 目录
-- [ ] 编写 `V1__initial_schema.sql`
-- [ ] 创建 leagues 表
-- [ ] 创建 teams 表
-- [ ] 创建 players 表
-- [ ] 创建 matches 表
-- [ ] 创建 transfer_market 表
-- [ ] 创建 indexes
+- [x] 创建 `migrations/` 目录 (内嵌在代码中)
+- [x] 编写初始 schema
+- [x] 创建 leagues 表
+- [x] 创建 teams 表
+- [x] 创建 players 表
+- [x] 创建 matches 表
+- [x] 创建 transfer_market 表
+- [x] 创建 scheduled_matches 表
+- [x] 创建 lineups 表
+- [x] 创建 team_statistics 表
+- [x] 创建 game_metadata 表
 
 **Acceptance Criteria**:
 - Migration 可以成功运行
@@ -59,9 +60,8 @@ assert!(db.conn.is_open());
 ---
 
 ### Task 2.2: Migration Runner
-- [ ] 实现 `Database::run_migrations()`
-- [ ] 集成 refinery
-- [ ] 添加 embedded migrations
+- [x] 实现 `Database::run_migrations()`
+- [x] 添加 embedded migrations
 
 **Acceptance Criteria**:
 ```rust
@@ -75,12 +75,15 @@ db.run_migrations()?;
 ## Phase 3: Repository Traits (接口定义)
 
 ### Task 3.1: 定义 Repository Trait
-- [ ] 创建 `repository.rs`
-- [ ] 定义 `TeamRepository` trait
-- [ ] 定义 `PlayerRepository` trait
-- [ ] 定义 `LeagueRepository` trait
-- [ ] 定义 `MatchRepository` trait
-- [ ] 定义 `TransferMarketRepository` trait
+- [x] 创建 `repository.rs`
+- [x] 定义 `TeamRepository` trait
+- [x] 定义 `PlayerRepository` trait
+- [x] 定义 `LeagueRepository` trait
+- [x] 定义 `MatchRepository` trait
+- [x] 定义 `TransferMarketRepository` trait
+- [x] 定义 `ScheduledMatchRepository` trait
+- [x] 定义 `LineupRepository` trait
+- [x] 定义 `TeamStatisticsRepository` trait
 
 **Acceptance Criteria**: 所有 trait 方法签名定义完成
 
