@@ -282,6 +282,24 @@ impl Database {
             [],
         ).map_err(|e| DatabaseError::MigrationError(e.to_string()))?;
 
+        // Transfer history table
+        self.conn.write().unwrap().execute(
+            "CREATE TABLE IF NOT EXISTS transfer_history (
+                id TEXT PRIMARY KEY,
+                player_id TEXT NOT NULL,
+                player_name TEXT NOT NULL,
+                from_team_id TEXT NOT NULL,
+                to_team_id TEXT,
+                transfer_type TEXT NOT NULL,
+                fee INTEGER NOT NULL,
+                date TEXT NOT NULL,
+                FOREIGN KEY (player_id) REFERENCES players(id),
+                FOREIGN KEY (from_team_id) REFERENCES teams(id),
+                FOREIGN KEY (to_team_id) REFERENCES teams(id)
+            )",
+            [],
+        ).map_err(|e| DatabaseError::MigrationError(e.to_string()))?;
+
         Ok(())
     }
 
@@ -332,6 +350,11 @@ impl Database {
     /// Get SaveManager instance
     pub fn save_manager(&self) -> crate::data::SaveManager {
         crate::data::SaveManager::new(std::path::PathBuf::from("saves"))
+    }
+
+    /// Get TransferHistoryRepository instance
+    pub fn transfer_history_repo(&self) -> crate::data::SqliteTransferHistoryRepository {
+        crate::data::SqliteTransferHistoryRepository::new(self.conn.clone())
     }
 }
 

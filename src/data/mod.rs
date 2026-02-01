@@ -10,6 +10,7 @@ mod scheduled_match_repo;
 mod lineup_repo;
 mod team_statistics_repo;
 mod transfer_repo;
+mod transfer_history_repo;
 mod save_manager;
 
 // Re-exports
@@ -27,4 +28,5 @@ pub use scheduled_match_repo::SqliteScheduledMatchRepository;
 pub use lineup_repo::SqliteLineupRepository;
 pub use team_statistics_repo::SqliteTeamStatisticsRepository;
 pub use transfer_repo::SqliteTransferMarketRepository;
+pub use transfer_history_repo::{TransferHistoryRepository, SqliteTransferHistoryRepository};
 pub use save_manager::{SaveManager, SaveMetadata};
