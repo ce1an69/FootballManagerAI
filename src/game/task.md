@@ -1,5 +1,22 @@
 # Game Module Implementation Tasks
 
+## 实际完成情况摘要
+
+**最后更新日期**: 2026-02-01
+
+**真实完成度**: 约 50%
+
+**主要缺失功能**:
+- Phase 2: 游戏流程控制（advance_to_next_match, update_after_match, is_last_match_of_round, mark_match_as_played）- 部分未实现
+- Phase 4: 游戏循环（GameLoop结构，run方法）- 未实现
+- Phase 6: 游戏初始化（start_new_game, load_game）- 未实现
+
+**已完成模块**:
+- Phase 1: 游戏状态（GameState, GameDate, Screen, Difficulty）- 完整实现
+- Phase 3: 事件系统（GameEvent, EventHandler, Effect）- 基础实现
+
+---
+
 ## Phase 1: 游戏状态
 
 ### Task 1.1: 枚举定义
@@ -41,9 +58,11 @@ assert_eq!(state.current_screen, Screen::TeamManagement);
 ## Phase 2: 游戏流程控制
 
 ### Task 2.1: 比赛流程
-- [x] 实现 `advance_to_next_match()`
-- [x] 查找玩家球队的下一场比赛
-- [x] 返回比赛信息
+- [ ] 实现 `advance_to_next_match()`
+- [ ] 查找玩家球队的下一场比赛
+- [ ] 返回比赛信息
+
+**Status**: ⚠️ 未实现 - 代码中未找到对应实现
 
 **Acceptance Criteria**:
 ```rust
@@ -54,18 +73,22 @@ assert!(next_match.opponent.name.len() > 0);
 ---
 
 ### Task 2.2: 比赛后更新
-- [x] 实现 `update_after_match()`
-- [x] 更新联赛轮次
-- [x] 标记比赛已打
-- [x] 更新球队统计
+- [ ] 实现 `update_after_match()`
+- [ ] 更新联赛轮次
+- [ ] 标记比赛已打
+- [ ] 更新球队统计
+
+**Status**: ⚠️ 未实现 - 代码中未找到对应实现
 
 **Acceptance Criteria**: 比赛后状态正确更新
 
 ---
 
 ### Task 2.3: 轮次判断
-- [x] 实现 `is_last_match_of_round()`
-- [x] 实现 `mark_match_as_played()`
+- [ ] 实现 `is_last_match_of_round()`
+- [ ] 实现 `mark_match_as_played()`
+
+**Status**: ⚠️ 未实现 - 代码中未找到对应实现
 
 **Acceptance Criteria**: 轮次判断正确
 
@@ -113,17 +136,21 @@ assert_eq!(effect, Effect::Render);
 ## Phase 4: 游戏循环
 
 ### Task 4.1: GameLoop 结构
-- [x] 定义 `GameLoop` struct
-- [x] 实现构造函数
+- [ ] 定义 `GameLoop` struct
+- [ ] 实现构造函数
+
+**Status**: ⚠️ 未实现 - 代码中未找到对应实现
 
 **Acceptance Criteria**: GameLoop 可以创建
 
 ---
 
 ### Task 4.2: 主循环
-- [x] 实现 `run()` 方法
-- [x] 实现渲染 → 输入 → 事件 → 副作用循环
-- [x] 处理退出
+- [ ] 实现 `run()` 方法
+- [ ] 实现渲染 → 输入 → 事件 → 副作用循环
+- [ ] 处理退出
+
+**Status**: ⚠️ 未实现 - 代码中未找到对应实现
 
 **Acceptance Criteria**: 游戏循环正常运行
 
@@ -132,18 +159,22 @@ assert_eq!(effect, Effect::Render);
 ## Phase 5: 存档系统
 
 ### Task 5.1: 存档结构
-- [x] 定义 `SaveGame` struct
-- [x] 定义 `SaveMetadata` struct
-- [x] 添加 `Serialize`/`Deserialize`
+- [ ] 定义 `SaveGame` struct
+- [ ] 定义 `SaveMetadata` struct
+- [ ] 添加 `Serialize`/`Deserialize`
+
+**Status**: ⚠️ 未实现 - 代码中未找到对应实现（GameState已实现序列化，但SaveGame结构未定义）
 
 **Acceptance Criteria**: 结构可以序列化
 
 ---
 
 ### Task 5.2: 保存功能
-- [x] 实现 `save()` 方法
-- [x] 保存到数据库
-- [x] 生成元数据
+- [ ] 实现 `save()` 方法
+- [ ] 保存到数据库
+- [ ] 生成元数据
+
+**Status**: ⚠️ 未实现 - 代码中未找到对应实现
 
 **Acceptance Criteria**:
 ```rust
@@ -154,9 +185,11 @@ state.save(1)?;
 ---
 
 ### Task 5.3: 加载功能
-- [x] 实现 `load()` 静态方法
-- [x] 从数据库加载
-- [x] 恢复GameState
+- [ ] 实现 `load()` 静态方法
+- [ ] 从数据库加载
+- [ ] 恢复GameState
+
+**Status**: ⚠️ 未实现 - 代码中未找到对应实现
 
 **Acceptance Criteria**:
 ```rust
@@ -167,8 +200,10 @@ let state = GameState::load(1)?;
 ---
 
 ### Task 5.4: 存档列表
-- [x] 实现 `list_saves()`
-- [x] 返回可用存档信息
+- [ ] 实现 `list_saves()`
+- [ ] 返回可用存档信息
+
+**Status**: ⚠️ 未实现 - 代码中未找到对应实现
 
 **Acceptance Criteria**: 能列出所有存档
 
@@ -177,10 +212,12 @@ let state = GameState::load(1)?;
 ## Phase 6: 游戏初始化
 
 ### Task 6.1: 新游戏入口
-- [x] 实现 `start_new_game()`
-- [x] 初始化数据库
-- [x] 生成游戏数据
-- [x] 创建GameState
+- [ ] 实现 `start_new_game()`
+- [ ] 初始化数据库
+- [ ] 生成游戏数据
+- [ ] 创建GameState
+
+**Status**: ⚠️ 未实现 - 代码中未找到对应实现
 
 **Acceptance Criteria**:
 ```rust
@@ -191,8 +228,10 @@ assert!(state.is_new_game);
 ---
 
 ### Task 6.2: 读档入口
-- [x] 实现 `load_game()`
-- [x] 加载指定存档
+- [ ] 实现 `load_game()`
+- [ ] 加载指定存档
+
+**Status**: ⚠️ 未实现 - 代码中未找到对应实现
 
 **Acceptance Criteria**: 能正确加载存档
 
