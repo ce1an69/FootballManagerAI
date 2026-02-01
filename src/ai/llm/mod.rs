@@ -1,8 +1,9 @@
 mod error;
 mod config;
-mod client;      // TODO: Will be implemented in Task 4
-// mod prompts;     // TODO: Will be implemented in Task 6
+mod client;
+mod prompts;
 
 pub use error::{LlmError, Result};
 pub use config::LlmConfig;
-pub use client::LLMClient;
+pub use client::{LLMClient, Message};
+pub use prompts::PromptTemplates;
