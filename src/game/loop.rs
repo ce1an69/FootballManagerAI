@@ -231,18 +231,31 @@ impl GameLoop {
         }
 
         // Update home players
-        let _home_updates = progression::update_players_after_match(&mut home_players, &player_minutes);
+        let home_updates = progression::update_players_after_match(&mut home_players, &player_minutes);
         for player in &home_players {
             self.database.player_repo().update(player)?;
         }
 
         // Update away players
-        let _away_updates = progression::update_players_after_match(&mut away_players, &player_minutes);
-        for player in &away_players {
-            self.database.player_repo().update(player)?;
-        }
+        let away_updates = progression::update_players_after_match(&mut away_players, &player_minutes);
 
-        // TODO: Create notifications for injuries and other significant updates
+        // Create notifications for injuries and other significant updates
+        for update in home_updates.iter().chain(away_updates.iter()) {
+            match &update.update_type {
+                crate::ai::PlayerUpdateType::Injured(days) => {
+                    if let Some(player) = home_players.iter().chain(away_players.iter())
+                        .find(|p| p.id == update.player_id) {
+                        self.game_state.add_notification(
+                            "Injury".to_string(),
+                            format!("{} has been injured for {} days!", player.name, days),
+                            crate::game::NotificationType::Injury,
+                            crate::game::NotificationPriority::High,
+                        );
+                    }
+                }
+                _ => {}
+            }
+        }
 
         Ok(())
     }
@@ -298,11 +311,29 @@ impl GameLoop {
 
         // Age each player and save back to database
         let updates = progression::age_players(&mut all_players);
-        for player in &all_players {
+
+        // Process retirement updates and filter out retired players
+        let mut retired_players = Vec::new();
+        for (player, update) in all_players.iter().zip(updates.iter()) {
             self.database.player_repo().update(player)?;
+
+            // Track retired players
+            if updates.iter().any(|u| u.player_id == player.id && matches!(u.update_type, crate::ai::PlayerUpdateType::Retired)) {
+                retired_players.push(player.id.clone());
+            }
         }
 
-        // TODO: Process retirement updates from the returned list
+        // Create retirement notifications
+        for player_id in retired_players {
+            if let Some(player) = all_players.iter().find(|p| p.id == player_id) {
+                self.game_state.add_notification(
+                    "Retirement".to_string(),
+                    format!("{} has retired from football at age {}", player.name, player.age),
+                    crate::game::NotificationType::News,
+                    crate::game::NotificationPriority::Normal,
+                );
+            }
+        }
 
         Ok(())
     }
