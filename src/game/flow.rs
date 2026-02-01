@@ -2,8 +2,9 @@ use crate::game::{GameState, Screen, GameDate};
 use crate::team::{League, MatchResult, Team};
 use crate::data::{
     Database, ScheduledMatchData, ScheduledMatchRepository,
-    MatchRepository, TeamStatisticsRepository,
+    MatchRepository, TeamStatisticsRepository, PlayerRepository,
 };
+use crate::ai::events::generate_injury_event;
 
 /// Match flow error types
 #[derive(Debug, thiserror::Error)]
@@ -118,6 +119,18 @@ pub fn update_after_match(
         crate::game::NotificationType::Match,
         crate::game::NotificationPriority::Normal,
     );
+
+    // Generate injury events for home team players
+    if let Some(home_team) = game_state.teams.get(&match_result.home_team_id) {
+        for player_slot in &home_team.starting_11 {
+            if let Ok(player) = database.player_repo().get_by_id(&player_slot.player_id) {
+                if let Some(event) = generate_injury_event(&player) {
+                    let notification = event.to_notification();
+                    game_state.notifications.push(notification);
+                }
+            }
+        }
+    }
 
     // Check for season end
     if is_season_end {
