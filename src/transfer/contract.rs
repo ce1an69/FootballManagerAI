@@ -24,6 +24,18 @@ impl ContractManager {
         additional_years: u8,
         salary_increase_percent: u8,
     ) -> Result<ContractUpdate, TransferError> {
+        // Validate additional_years
+        if additional_years == 0 {
+            return Err(TransferError::InvalidOffer(
+                "Additional years must be greater than 0".to_string()
+            ));
+        }
+        if additional_years > 5 {
+            return Err(TransferError::InvalidOffer(
+                "Additional years cannot exceed 5".to_string()
+            ));
+        }
+
         // Verify player belongs to team
         let player_repo = self.database.player_repo();
         let mut player = player_repo.get_by_id(player_id)
@@ -32,6 +44,13 @@ impl ContractManager {
         if player.team_id.as_deref() != Some(team_id) {
             return Err(TransferError::InvalidOffer(
                 format!("Player {} is not on team {}", player_id, team_id)
+            ));
+        }
+
+        // Check if contract has already expired
+        if player.contract_years == 0 {
+            return Err(TransferError::InvalidOffer(
+                "Cannot renew an expired contract".to_string()
             ));
         }
 
@@ -303,19 +322,7 @@ mod tests {
     use super::*;
     use crate::data::Database;
 
-    #[test]
-    fn test_check_expiring_contracts() {
-        let db = Database::in_memory().unwrap();
-        db.run_migrations().unwrap();
-
-        let manager = ContractManager::new(db);
-        // Would need to add test players with contracts
-        let result = manager.check_expiring_contracts("team1", 3);
-        assert!(result.is_ok());
-    }
-
-    #[test]
-    fn test_salary_budget() {
+    fn setup_test_data() -> Database {
         let db = Database::in_memory().unwrap();
         db.run_migrations().unwrap();
 
@@ -327,16 +334,235 @@ mod tests {
         let team = crate::team::Team::new("team1".to_string(), "Test Team".to_string(), "league1".to_string(), 10_000_000);
         db.team_repo().create(&team).unwrap();
 
-        // Create a player with the team_id set
+        db
+    }
+
+    #[test]
+    fn test_renew_contract() {
+        let db = setup_test_data();
+
+        // Create a player with a contract
+        let mut player = crate::team::Player::new("p1".to_string(), "Player 1".to_string(), crate::team::Position::ST);
+        player.team_id = Some("team1".to_string());
+        player.contract_years = 2;
+        player.wage = 50_000;
+        player.morale = 80; // High morale to ensure they want to renew
+        player.age = 25; // Prime age
+        db.player_repo().create(&player).unwrap();
+
+        let manager = ContractManager::new(db);
+
+        // Test successful renewal
+        let result = manager.renew_contract("p1", "team1", 2, 10);
+        assert!(result.is_ok());
+
+        let update = result.unwrap();
+        assert_eq!(update.player_id, "p1");
+        assert_eq!(update.old_salary, 50_000);
+        assert_eq!(update.new_salary, 55_000); // 50k + 10%
+        assert_eq!(update.old_years, 2);
+        assert_eq!(update.new_years, 4); // 2 + 2
+    }
+
+    #[test]
+    fn test_renew_contract_invalid_years_zero() {
+        let db = setup_test_data();
+
+        let mut player = crate::team::Player::new("p1".to_string(), "Player 1".to_string(), crate::team::Position::ST);
+        player.team_id = Some("team1".to_string());
+        player.contract_years = 2;
+        player.wage = 50_000;
+        db.player_repo().create(&player).unwrap();
+
+        let manager = ContractManager::new(db);
+
+        // Test that 0 years is rejected
+        let result = manager.renew_contract("p1", "team1", 0, 10);
+        assert!(result.is_err());
+        match result.unwrap_err() {
+            TransferError::InvalidOffer(msg) => {
+                assert!(msg.contains("greater than 0") || msg.contains("must be greater"));
+            }
+            _ => panic!("Expected InvalidOffer error"),
+        }
+    }
+
+    #[test]
+    fn test_renew_contract_invalid_years_too_many() {
+        let db = setup_test_data();
+
+        let mut player = crate::team::Player::new("p1".to_string(), "Player 1".to_string(), crate::team::Position::ST);
+        player.team_id = Some("team1".to_string());
+        player.contract_years = 2;
+        player.wage = 50_000;
+        db.player_repo().create(&player).unwrap();
+
+        let manager = ContractManager::new(db);
+
+        // Test that >5 years is rejected
+        let result = manager.renew_contract("p1", "team1", 6, 10);
+        assert!(result.is_err());
+        match result.unwrap_err() {
+            TransferError::InvalidOffer(msg) => {
+                assert!(msg.contains("cannot exceed 5") || msg.contains("exceed"));
+            }
+            _ => panic!("Expected InvalidOffer error"),
+        }
+    }
+
+    #[test]
+    fn test_renew_contract_expired_contract() {
+        let db = setup_test_data();
+
+        let mut player = crate::team::Player::new("p1".to_string(), "Player 1".to_string(), crate::team::Position::ST);
+        player.team_id = Some("team1".to_string());
+        player.contract_years = 0; // Already expired
+        player.wage = 50_000;
+        db.player_repo().create(&player).unwrap();
+
+        let manager = ContractManager::new(db);
+
+        // Test that expired contract cannot be renewed
+        let result = manager.renew_contract("p1", "team1", 2, 10);
+        assert!(result.is_err());
+        match result.unwrap_err() {
+            TransferError::InvalidOffer(msg) => {
+                assert!(msg.contains("expired") || msg.contains("Cannot renew"));
+            }
+            _ => panic!("Expected InvalidOffer error for expired contract"),
+        }
+    }
+
+    #[test]
+    fn test_renew_contract_wrong_team() {
+        let db = setup_test_data();
+
+        // Create another team
+        let team2 = crate::team::Team::new("team2".to_string(), "Team 2".to_string(), "league1".to_string(), 5_000_000);
+        db.team_repo().create(&team2).unwrap();
+
+        let mut player = crate::team::Player::new("p1".to_string(), "Player 1".to_string(), crate::team::Position::ST);
+        player.team_id = Some("team2".to_string()); // Player is on team2
+        player.contract_years = 2;
+        player.wage = 50_000;
+        db.player_repo().create(&player).unwrap();
+
+        let manager = ContractManager::new(db);
+
+        // Try to renew from team1 (should fail)
+        let result = manager.renew_contract("p1", "team1", 2, 10);
+        assert!(result.is_err());
+        match result.unwrap_err() {
+            TransferError::InvalidOffer(msg) => {
+                assert!(msg.contains("not on team"));
+            }
+            _ => panic!("Expected InvalidOffer error for wrong team"),
+        }
+    }
+
+    #[test]
+    fn test_check_expiring_contracts() {
+        let db = setup_test_data();
+
+        // Create players with different contract lengths
+        let mut player1 = crate::team::Player::new("p1".to_string(), "Player 1".to_string(), crate::team::Position::ST);
+        player1.team_id = Some("team1".to_string());
+        player1.contract_years = 12; // 1 year
+        player1.age = 25;
+        player1.current_ability = 120;
+        player1.wage = 50_000;
+        player1.market_value = 5_000_000;
+
+        let mut player2 = crate::team::Player::new("p2".to_string(), "Player 2".to_string(), crate::team::Position::CM);
+        player2.team_id = Some("team1".to_string());
+        player2.contract_years = 6; // 6 months
+        player2.age = 28;
+        player2.current_ability = 135;
+        player2.wage = 80_000;
+        player2.market_value = 10_000_000;
+
+        let mut player3 = crate::team::Player::new("p3".to_string(), "Player 3".to_string(), crate::team::Position::CB);
+        player3.team_id = Some("team1".to_string());
+        player3.contract_years = 36; // 3 years - should not appear
+        player3.age = 24;
+        player3.current_ability = 110;
+        player3.wage = 40_000;
+        player3.market_value = 3_000_000;
+
+        db.player_repo().create(&player1).unwrap();
+        db.player_repo().create(&player2).unwrap();
+        db.player_repo().create(&player3).unwrap();
+
+        let manager = ContractManager::new(db);
+
+        // Check for contracts expiring within 12 months
+        let result = manager.check_expiring_contracts("team1", 12);
+        assert!(result.is_ok());
+
+        let expiring = result.unwrap();
+        assert_eq!(expiring.len(), 2); // Only player1 and player2
+
+        // Should be sorted by contract remaining (ascending)
+        assert_eq!(expiring[0].player_id, "p2"); // 6 months
+        assert_eq!(expiring[1].player_id, "p1"); // 12 months
+
+        // Verify player2 details
+        assert_eq!(expiring[0].contract_remaining, 6);
+        assert_eq!(expiring[0].age, 28);
+        assert_eq!(expiring[0].current_ability, 135);
+        assert_eq!(expiring[0].wage, 80_000);
+        assert_eq!(expiring[0].market_value, 10_000_000);
+    }
+
+    #[test]
+    fn test_check_expiring_contracts_empty_team() {
+        let db = setup_test_data();
+        let manager = ContractManager::new(db);
+
+        // Check for team with no players
+        let result = manager.check_expiring_contracts("team1", 12);
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap().len(), 0);
+    }
+
+    #[test]
+    fn test_salary_budget() {
+        let db = setup_test_data();
+
+        // Create players with the team_id set
         let mut player1 = crate::team::Player::new("p1".to_string(), "Player 1".to_string(), crate::team::Position::ST);
         player1.team_id = Some("team1".to_string());
         player1.wage = 50_000; // 50k per week
+
+        let mut player2 = crate::team::Player::new("p2".to_string(), "Player 2".to_string(), crate::team::Position::CM);
+        player2.team_id = Some("team1".to_string());
+        player2.wage = 80_000; // 80k per week
+
         db.player_repo().create(&player1).unwrap();
+        db.player_repo().create(&player2).unwrap();
 
         let manager = ContractManager::new(db);
         let result = manager.get_salary_budget("team1");
         assert!(result.is_ok());
-        // Budget should be 20% of 10M = 2M per week, minus 50k wages = 1.95M remaining
-        assert!(result.unwrap() == 1_950_000);
+        // Budget should be 20% of 10M = 2M per week, minus 130k wages = 1.87M remaining
+        assert_eq!(result.unwrap(), 1_870_000);
+    }
+
+    #[test]
+    fn test_can_afford_player() {
+        let db = setup_test_data();
+
+        let mut player1 = crate::team::Player::new("p1".to_string(), "Player 1".to_string(), crate::team::Position::ST);
+        player1.team_id = Some("team1".to_string());
+        player1.wage = 50_000;
+        db.player_repo().create(&player1).unwrap();
+
+        let manager = ContractManager::new(db);
+
+        // Should be able to afford a 100k wage player
+        assert!(manager.can_afford_player("team1", 100_000).unwrap());
+
+        // Should not be able to afford a 3M wage player
+        assert!(!manager.can_afford_player("team1", 3_000_000).unwrap());
     }
 }
