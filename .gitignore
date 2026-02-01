@@ -27,3 +27,6 @@ saves/
 
 # Git worktrees
 .worktrees/
+
+# LLM Configuration
+config.json
