@@ -22,4 +22,5 @@ target
 
 .claude/
 .cursor/
-.vscode/saves/
+.vscode/
+saves/
