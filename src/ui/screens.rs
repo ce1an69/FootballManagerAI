@@ -439,7 +439,7 @@ impl LeagueTableScreen {
         }
     }
 
-    pub fn render(&mut self, frame: &mut Frame, area: Rect, state: &GameState) {
+    pub fn render(&mut self, frame: &mut Frame, area: Rect, _state: &GameState, _language: Language) {
         let chunks = Layout::default()
             .direction(Direction::Vertical)
             .margin(5)
@@ -542,7 +542,7 @@ impl MatchModeSelectionScreen {
         }
     }
 
-    pub fn render(&mut self, frame: &mut Frame, area: Rect, state: &GameState) {
+    pub fn render(&mut self, frame: &mut Frame, area: Rect, _state: &GameState, _language: Language) {
         let chunks = Layout::default()
             .direction(Direction::Vertical)
             .margin(5)
@@ -654,7 +654,7 @@ impl PlayerDetailScreen {
         }
     }
 
-    pub fn render(&mut self, frame: &mut Frame, area: Rect, _state: &GameState) {
+    pub fn render(&mut self, frame: &mut Frame, area: Rect, _state: &GameState, _language: Language) {
         // Placeholder: Player data would be fetched from database in real implementation
         let player_found = true; // Simulating player exists
 
@@ -764,7 +764,7 @@ impl MatchResultScreen {
         }
     }
 
-    pub fn render(&mut self, frame: &mut Frame, area: Rect) {
+    pub fn render(&mut self, frame: &mut Frame, area: Rect, _state: &GameState, _language: Language) {
         let chunks = Layout::default()
             .direction(Direction::Vertical)
             .margin(5)
@@ -858,7 +858,7 @@ impl SeasonSummaryScreen {
         Self { season }
     }
 
-    pub fn render(&mut self, frame: &mut Frame, area: Rect) {
+    pub fn render(&mut self, frame: &mut Frame, area: Rect, _state: &GameState, _language: Language) {
         let content = Paragraph::new(format!("Season {} Summary\n\n[Season summary placeholder]", self.season))
             .block(
                 Block::default()
@@ -904,7 +904,7 @@ impl MatchHistoryScreen {
         }
     }
 
-    pub fn render(&mut self, frame: &mut Frame, area: Rect) {
+    pub fn render(&mut self, frame: &mut Frame, area: Rect, _state: &GameState, _language: Language) {
         let chunks = Layout::default()
             .direction(Direction::Vertical)
             .margin(5)
@@ -1094,7 +1094,7 @@ impl TacticsScreen {
         }
     }
 
-    pub fn render(&mut self, frame: &mut Frame, area: Rect, state: &GameState) {
+    pub fn render(&mut self, frame: &mut Frame, area: Rect, state: &GameState, _language: Language) {
         let chunks = Layout::default()
             .direction(Direction::Vertical)
             .margin(5)
@@ -1204,7 +1204,7 @@ impl TransferMarketScreen {
         }
     }
 
-    pub fn render(&mut self, frame: &mut Frame, area: Rect, state: &GameState) {
+    pub fn render(&mut self, frame: &mut Frame, area: Rect, _state: &GameState, _language: Language) {
         let chunks = Layout::default()
             .direction(Direction::Vertical)
             .margin(5)
@@ -1300,7 +1300,7 @@ impl TeamManagementScreen {
         }
     }
 
-    pub fn render(&mut self, frame: &mut Frame, area: Rect, state: &GameState) {
+    pub fn render(&mut self, frame: &mut Frame, area: Rect, state: &GameState, _language: Language) {
         let chunks = Layout::default()
             .direction(Direction::Vertical)
             .margin(5)
@@ -1435,7 +1435,7 @@ impl MatchLiveScreen {
         }
     }
 
-    pub fn render(&mut self, frame: &mut Frame, area: Rect) {
+    pub fn render(&mut self, frame: &mut Frame, area: Rect, _state: &GameState, _language: Language) {
         let chunks = Layout::default()
             .direction(Direction::Vertical)
             .margin(5)
@@ -1522,7 +1522,7 @@ impl FinanceReportScreen {
         }
     }
 
-    pub fn render(&mut self, frame: &mut Frame, area: Rect, state: &GameState) {
+    pub fn render(&mut self, frame: &mut Frame, area: Rect, state: &GameState, _language: Language) {
         let chunks = Layout::default()
             .direction(Direction::Vertical)
             .margin(5)
