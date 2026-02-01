@@ -1,5 +1,6 @@
 use crate::game::GameState;
 use crate::ai::{generate_league, generate_team};
+use crate::ai::llm::{LlmConfig, GameDataGenerator};
 use crate::data::{
     Database, SaveManager,
     TeamRepository, PlayerRepository, LeagueRepository,
@@ -190,6 +191,132 @@ pub fn quick_start() -> Result<(GameState, Database), InitError> {
         120,
         2026
     )
+}
+
+/// Use LLM to generate game data
+///
+/// Attempts to use LLM for generation, falls back to random generation on error
+pub async fn quick_start_with_llm() -> Result<(GameState, Database), Box<dyn std::error::Error>> {
+    let config = LlmConfig::load_or_default()
+        .map_err(|e| Box::new(e) as Box<dyn std::error::Error>)?;
+
+    // Check if configuration is valid
+    if !config.is_valid() {
+        println!("LLM configuration invalid, falling back to random generation...");
+        return Ok(quick_start()?);
+    }
+
+    println!("Using LLM to generate game data...");
+
+    let client = crate::ai::llm::LLMClient::new(config);
+    let mut generator = GameDataGenerator::new(client);
+
+    match generator.generate_league().await {
+        Ok(league) => {
+            println!("League generated successfully: {}", league.name);
+
+            // Generate teams
+            let teams = generator.generate_teams(&league, 20).await?;
+            println!("Generated {} teams", teams.len());
+
+            // Use regular game initialization with LLM-generated data
+            let save_manager = SaveManager::default();
+            let timestamp = std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap_or(std::time::Duration::from_secs(0))
+                .as_secs();
+            let save_path = save_manager.get_save_path(1, &league.name, timestamp);
+
+            // Initialize database
+            let db = Database::new(save_path.to_str().unwrap())?;
+            db.run_migrations()?;
+
+            // Select player team (first team by default)
+            let player_team_id = teams.first()
+                .map(|t| t.id.clone())
+                .ok_or_else(|| InitError::DatabaseError(
+                    crate::data::DatabaseError::QueryError("No teams generated".to_string())
+                ))?;
+
+            // Create game state
+            let mut game_state = GameState::new(player_team_id, league, teams, 2026);
+            game_state.db_path = save_path.to_string_lossy().to_string();
+            game_state.is_new_game = true;
+
+            // Save league to database
+            db.league_repo().create(&game_state.league)?;
+
+            // Save teams to database
+            let team_repo = db.team_repo();
+            for (_team_id, team) in &game_state.teams {
+                team_repo.create(team)?;
+            }
+
+            // Generate players for each team using LLM
+            let player_repo = db.player_repo();
+            for (_team_id, team) in &game_state.teams {
+                println!("Generating players for team: {}", team.name);
+
+                // Generate players for this team
+                let players = generator.generate_team_players(team).await?;
+
+                for player in players {
+                    // Set team_id
+                    let mut player_with_team = player;
+                    player_with_team.team_id = Some(team.id.clone());
+
+                    player_repo.create(&player_with_team)?;
+                }
+            }
+
+            // Generate league schedule
+            game_state.league.generate_schedule();
+
+            // Save scheduled matches to database
+            for round in &game_state.league.schedule.rounds {
+                for scheduled_match in &round.matches {
+                    let match_data = crate::data::ScheduledMatchData {
+                        id: uuid::Uuid::new_v4().to_string(),
+                        league_id: game_state.league.id.clone(),
+                        round_number: round.round_number,
+                        home_team_id: scheduled_match.home_team_id.clone(),
+                        away_team_id: scheduled_match.away_team_id.clone(),
+                        played: scheduled_match.played,
+                    };
+
+                    db.scheduled_match_repo().create(&match_data)?;
+                }
+            }
+
+            // Create initial team statistics
+            let stats_repo = db.team_statistics_repo();
+            for team_id in &game_state.league.teams {
+                stats_repo.create(team_id)?;
+            }
+
+            // Save initial game state
+            save_manager.create_new_save(1, &game_state, &db)?;
+
+            // Add welcome notification
+            game_state.add_notification(
+                "Welcome to Football Manager!".to_string(),
+                format!("You are managing {}", game_state.get_player_team()
+                    .map(|t| t.name.as_str())
+                    .unwrap_or("your team")
+                ),
+                crate::game::NotificationType::System,
+                crate::game::NotificationPriority::Normal,
+            );
+
+            println!("Game data generation complete!");
+
+            Ok((game_state, db))
+        }
+        Err(e) => {
+            println!("LLM generation failed: {}, falling back to random generation...", e);
+            Ok(quick_start()?)
+        }
+    }
 }
 
 #[cfg(test)]
