@@ -3,6 +3,7 @@ use crate::game::GameState;
 use crate::team::{League, Team};
 use std::path::{Path, PathBuf};
 use std::fs;
+use rusqlite::params;
 
 /// Save metadata
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
@@ -190,6 +191,173 @@ impl SaveManager {
     /// Get autosave path
     pub fn get_autosave_path(&self) -> PathBuf {
         self.saves_dir.join(format!("save_{:03}_autosave.db", Self::AUTOSAVE_SLOT))
+    }
+
+    /// Save game to database
+    pub fn save_game(
+        &self,
+        slot: u8,
+        state: &GameState,
+        db: &Database,
+    ) -> Result<PathBuf, DatabaseError> {
+        // Get current timestamp
+        let saved_at = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .map_err(|e| DatabaseError::QueryError(format!("Failed to get time: {}", e)))?
+            .as_secs();
+
+        // Get team name from state
+        let team_name = state.teams.get(&state.player_team_id)
+            .map(|t| t.name.clone())
+            .unwrap_or_else(|| "Unknown".to_string());
+
+        // Generate save path
+        let save_path = self.get_save_path(slot, &team_name, saved_at);
+
+        // Copy current database to save location
+        let current_db_path = std::path::Path::new(&state.db_path);
+        if current_db_path.exists() {
+            fs::copy(&state.db_path, &save_path)
+                .map_err(|e| DatabaseError::QueryError(format!("Failed to copy database: {}", e)))?;
+        } else {
+            // Create new database at save location
+            let save_db = Database::new(save_path.to_str().unwrap())?;
+            save_db.run_migrations()?;
+        }
+
+        // Open the save database and write metadata
+        let save_db = Database::new(save_path.to_str().unwrap())?;
+
+        // Save game state as JSON in game_metadata table
+        let state_json = serde_json::to_string(state)
+            .map_err(|e| DatabaseError::SerializationError(e.to_string()))?;
+
+        // Save metadata
+        save_db.conn.write().unwrap().execute(
+            "INSERT OR REPLACE INTO game_metadata (key, value) VALUES (?, ?)",
+            rusqlite::params!["game_state", state_json],
+        ).map_err(|e| DatabaseError::QueryError(e.to_string()))?;
+
+        // Save individual metadata fields for easier querying
+        save_db.conn.write().unwrap().execute(
+            "INSERT OR REPLACE INTO game_metadata (key, value) VALUES (?, ?)",
+            rusqlite::params!["player_name", state.player_name.as_deref().unwrap_or("Player")],
+        ).map_err(|e| DatabaseError::QueryError(e.to_string()))?;
+
+        save_db.conn.write().unwrap().execute(
+            "INSERT OR REPLACE INTO game_metadata (key, value) VALUES (?, ?)",
+            rusqlite::params!["game_date", format!("{}", state.current_date)],
+        ).map_err(|e| DatabaseError::QueryError(e.to_string()))?;
+
+        save_db.conn.write().unwrap().execute(
+            "INSERT OR REPLACE INTO game_metadata (key, value) VALUES (?, ?)",
+            rusqlite::params!["season", format!("Year {}", state.current_date.year)],
+        ).map_err(|e| DatabaseError::QueryError(e.to_string()))?;
+
+        save_db.conn.write().unwrap().execute(
+            "INSERT OR REPLACE INTO game_metadata (key, value) VALUES (?, ?)",
+            rusqlite::params!["saved_at", saved_at.to_string()],
+        ).map_err(|e| DatabaseError::QueryError(e.to_string()))?;
+
+        save_db.conn.write().unwrap().execute(
+            "INSERT OR REPLACE INTO game_metadata (key, value) VALUES (?, ?)",
+            rusqlite::params!["save_slot", slot.to_string()],
+        ).map_err(|e| DatabaseError::QueryError(e.to_string()))?;
+
+        save_db.conn.write().unwrap().execute(
+            "INSERT OR REPLACE INTO game_metadata (key, value) VALUES (?, ?)",
+            rusqlite::params!["save_version", "1.0"],
+        ).map_err(|e| DatabaseError::QueryError(e.to_string()))?;
+
+        Ok(save_path)
+    }
+
+    /// Load game from database
+    pub fn load_game(&self, slot: u8) -> Result<GameState, DatabaseError> {
+        // Find save file for this slot
+        let saves = self.list_saves()?;
+        let save_metadata = saves.iter()
+            .find(|s| s.slot == slot)
+            .ok_or_else(|| DatabaseError::NotFound(format!("Save slot {}", slot)))?;
+
+        // Open the save database
+        let db = Database::new(&save_metadata.db_path)?;
+
+        // Load game state from game_metadata table
+        let state_json: String = db.conn.read().unwrap().query_row(
+            "SELECT value FROM game_metadata WHERE key = 'game_state'",
+            [],
+            |row| row.get(0),
+        ).map_err(|e| match e {
+            rusqlite::Error::QueryReturnedNoRows => {
+                DatabaseError::NotFound("game_state metadata".to_string())
+            },
+            _ => DatabaseError::QueryError(e.to_string()),
+        })?;
+
+        // Deserialize game state
+        let state: GameState = serde_json::from_str(&state_json)
+            .map_err(|e| DatabaseError::SerializationError(format!("Failed to deserialize state: {}", e)))?;
+
+        Ok(state)
+    }
+
+    /// Create a new save with initial state
+    pub fn create_new_save(
+        &self,
+        slot: u8,
+        initial_state: &GameState,
+        db: &Database,
+    ) -> Result<PathBuf, DatabaseError> {
+        self.save_game(slot, initial_state, db)
+    }
+
+    /// Backup save to specified directory
+    pub fn backup_save(&self, slot: u8, backup_dir: &str) -> Result<PathBuf, DatabaseError> {
+        // Find save file for this slot
+        let saves = self.list_saves()?;
+        let save_metadata = saves.iter()
+            .find(|s| s.slot == slot)
+            .ok_or_else(|| DatabaseError::NotFound(format!("Save slot {}", slot)))?;
+
+        // Create backup directory if it doesn't exist
+        fs::create_dir_all(backup_dir)
+            .map_err(|e| DatabaseError::QueryError(format!("Failed to create backup directory: {}", e)))?;
+
+        // Generate backup filename
+        let source_path = std::path::Path::new(&save_metadata.db_path);
+        let filename = source_path.file_name()
+            .and_then(|n| n.to_str())
+            .ok_or_else(|| DatabaseError::QueryError("Invalid save filename".to_string()))?;
+
+        let backup_path = std::path::Path::new(backup_dir).join(filename);
+
+        // Copy save file to backup location
+        fs::copy(&save_metadata.db_path, &backup_path)
+            .map_err(|e| DatabaseError::QueryError(format!("Failed to backup save: {}", e)))?;
+
+        Ok(backup_path)
+    }
+
+    /// Get save version
+    pub fn get_save_version(&self, slot: u8) -> Result<String, DatabaseError> {
+        // Find save file for this slot
+        let saves = self.list_saves()?;
+        let save_metadata = saves.iter()
+            .find(|s| s.slot == slot)
+            .ok_or_else(|| DatabaseError::NotFound(format!("Save slot {}", slot)))?;
+
+        // Open the save database
+        let db = Database::new(&save_metadata.db_path)?;
+
+        // Get version
+        let version: String = db.conn.read().unwrap().query_row(
+            "SELECT value FROM game_metadata WHERE key = 'save_version'",
+            [],
+            |row| row.get(0),
+        ).unwrap_or_else(|_| "1.0".to_string());
+
+        Ok(version)
     }
 }
 

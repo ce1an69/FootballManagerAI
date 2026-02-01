@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use uuid::Uuid;
 
 /// Game state structure
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct GameState {
     // Basic game information
     pub game_id: String,
@@ -150,8 +150,14 @@ impl GameDate {
     }
 }
 
+impl std::fmt::Display for GameDate {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{:04}-{:02}-{:02}", self.year, self.month, self.day)
+    }
+}
+
 /// UI Screen types
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
 pub enum Screen {
     MainMenu,
     TeamManagement,
@@ -171,7 +177,7 @@ pub enum Screen {
 }
 
 /// Game difficulty settings
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, serde::Serialize, serde::Deserialize)]
 pub enum Difficulty {
     Easy,
     Normal,
@@ -179,7 +185,7 @@ pub enum Difficulty {
 }
 
 /// Notification structure
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct Notification {
     pub id: String,
     pub title: String,
@@ -191,7 +197,7 @@ pub struct Notification {
 }
 
 /// Notification types
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
 pub enum NotificationType {
     Transfer,
     Injury,
@@ -205,7 +211,7 @@ pub enum NotificationType {
 }
 
 /// Notification priority
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
 pub enum NotificationPriority {
     Urgent,
     High,
