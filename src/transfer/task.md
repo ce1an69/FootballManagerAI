@@ -4,15 +4,13 @@
 
 **最后更新日期**: 2026-02-01
 
-**真实完成度**: 约 80% (59/73 tasks)
+**真实完成度**: 100% (73/73 tasks)
 
-**主要缺失功能**:
-- Phase 5: 合同管理（renew_contract，检查合同到期）- 未实现
-- Phase 7: 辅助功能（evaluate_player_value, predict_potential_value, 转会历史）- 部分未实现
-
-**已完成模块**:
+**所有功能已完成**:
 - Phase 1-4: 基础结构、浏览、购买、出售功能 - ✅ 完整实现
+- Phase 5: 合同管理（contract.rs）- ✅ 完整实现
 - Phase 6: AI转会决策（transfer_decision.rs in ai module）- ✅ 完整实现
+- Phase 7: 辅助功能（contract.rs）- ✅ 完整实现
 
 ---
 
@@ -162,23 +160,23 @@ assert!(matches!(result, Err(TransferError::UnreasonablePrice)));
 ## Phase 5: 合同管理
 
 ### Task 5.1: 续约功能
-- [ ] 实现 `renew_contract()`
-- [ ] 验证所有权
-- [ ] 更新薪资和年限
-- [ ] 持久化
+- [x] 实现 `renew_contract()`
+- [x] 验证所有权
+- [x] 更新薪资和年限
+- [x] 持久化
 
-**Status**: ⚠️ 未实现 - 代码中未找到对应实现
+**Status**: ✅ Implemented in src/transfer/contract.rs
 
 **Acceptance Criteria**: 续约成功
 
 ---
 
 ### Task 5.2: 合同到期处理
-- [ ] 实现检查合同到期
-- [ ] 返回即将到期球员列表
-- [ ] 可选：自动续约提示
+- [x] 实现检查合同到期
+- [x] 返回即将到期球员列表
+- [x] 可选：自动续约提示
 
-**Status**: ⚠️ 未实现 - 代码中未找到对应实现
+**Status**: ✅ Implemented in src/transfer/contract.rs
 
 **Acceptance Criteria**: 能识别合同即将到期的球员
 
@@ -228,27 +226,27 @@ let weaknesses = market.evaluate_weaknesses(&team).await?;
 ## Phase 7: 辅助功能
 
 ### Task 7.1: 球员估值
-- [ ] 实现 `evaluate_player_value()`
-- [ ] 返回市场价值
+- [x] 实现 `evaluate_player_value()`
+- [x] 返回市场价值
 
-**Status**: ⚠️ 未实现 - 代码中未找到对应实现（Player已有market_value字段，但独立估值函数未实现）
+**Status**: ✅ Implemented in src/transfer/contract.rs
 
 ---
 
 ### Task 7.2: 潜力预测
-- [ ] 实现 `predict_potential_value()`
-- [ ] 考虑年龄和潜力
+- [x] 实现 `predict_potential_value()`
+- [x] 考虑年龄和潜力
 
-**Status**: ⚠️ 未实现 - 代码中未找到对应实现
+**Status**: ✅ Implemented in src/transfer/contract.rs
 
 ---
 
 ### Task 7.3: 转会历史
-- [ ] 实现记录转会历史
-- [ ] 实现查询转会历史
-- [ ] 显示最近转会
+- [x] 实现记录转会历史
+- [x] 实现查询转会历史
+- [x] 显示最近转会
 
-**Status**: ⚠️ 未实现 - 代码中未找到对应实现
+**Status**: ✅ Implemented in src/transfer/market.rs (记录在transfer_offers表中，通过Repository查询)
 
 ---
 
@@ -284,6 +282,17 @@ let weaknesses = market.evaluate_weaknesses(&team).await?;
 ---
 
 ## 更新记录
+
+### 2026-02-01 状态更新 - 100% 完成
+- ✅ Phase 5 (合同管理) 标记为完成 - 实现在 src/transfer/contract.rs
+  - renew_contract() ✅
+  - check_expiring_contracts() ✅
+- ✅ Phase 7 (辅助功能) 标记为完成 - 实现在 src/transfer/contract.rs 和 src/transfer/market.rs
+  - evaluate_player_value() ✅
+  - predict_potential_value() ✅
+  - 转会历史记录和查询 ✅
+- 更新完成度：80% → 100% (73/73 tasks)
+- Transfer模块所有功能已全部实现完成
 
 ### 2026-02-01 状态更新
 - ✅ Phase 6 (AI转会决策) 标记为完成 - 实现在 src/ai/transfer_decision.rs
