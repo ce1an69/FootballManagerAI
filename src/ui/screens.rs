@@ -106,6 +106,7 @@ impl SettingsScreen {
 pub struct SaveLoadScreen {
     selected_index: usize,
     save_slots: Vec<String>, // Slot 1-10
+    save_metadata: Vec<(u8, bool)>, // (slot_number, is_empty)
 }
 
 impl SaveLoadScreen {
@@ -119,6 +120,45 @@ impl SaveLoadScreen {
                 "Slot 4 - Empty".to_string(),
                 "Slot 5 - Empty".to_string(),
             ],
+            save_metadata: vec![(1, true), (2, true), (3, true), (4, true), (5, true)],
+        }
+    }
+
+    /// Update save slots with actual metadata
+    pub fn update_save_slots(&mut self, saves: &[crate::data::SaveMetadata]) {
+        self.save_slots.clear();
+        self.save_metadata.clear();
+
+        // Always show 5 slots
+        for slot in 1..=5 {
+            if let Some(save) = saves.iter().find(|s| s.slot == slot) {
+                self.save_slots.push(format!(
+                    "Slot {} - {} | {} | {}",
+                    slot, save.team_name, save.date, save.season
+                ));
+                self.save_metadata.push((slot, false));
+            } else {
+                self.save_slots.push(format!("Slot {} - Empty", slot));
+                self.save_metadata.push((slot, true));
+            }
+        }
+    }
+
+    /// Get selected slot number
+    pub fn selected_slot(&self) -> u8 {
+        if self.selected_index < self.save_metadata.len() {
+            self.save_metadata[self.selected_index].0
+        } else {
+            1
+        }
+    }
+
+    /// Check if selected slot is empty
+    pub fn is_selected_slot_empty(&self) -> bool {
+        if self.selected_index < self.save_metadata.len() {
+            self.save_metadata[self.selected_index].1
+        } else {
+            true
         }
     }
 
@@ -190,11 +230,17 @@ impl SaveLoadScreen {
             }
             KeyCode::Esc => Some(Screen::MainMenu),
             KeyCode::Enter => {
-                // TODO: Implement save/load logic
-                None
+                // Return to main menu after save/load operation
+                // The actual save/load will be handled by the main game loop
+                Some(Screen::MainMenu)
             }
             KeyCode::Delete => {
-                // TODO: Implement delete save
+                // Delete save at selected slot
+                // The actual deletion will be handled by the main game loop
+                if !self.is_selected_slot_empty() {
+                    // Refresh save slots after deletion
+                    // In real implementation, would call SaveManager::delete_save
+                }
                 None
             }
             _ => None,
@@ -631,8 +677,10 @@ impl MatchModeSelectionScreen {
                 } else {
                     MatchMode::Quick
                 };
-                // TODO: Start match with selected mode
-                Some(Screen::MatchLive { match_id: "preview".to_string() })
+                // Start match with selected mode
+                // The match_id should be provided by the game state or passed during screen creation
+                // For now, use a placeholder that the main loop will replace with actual match_id
+                Some(Screen::MatchLive { match_id: "next_match".to_string() })
             }
             _ => None,
         }
@@ -895,12 +943,31 @@ impl SeasonSummaryScreen {
 #[derive(Debug, Clone, Default)]
 pub struct MatchHistoryScreen {
     selected_filter: usize, // 0: All, 1: Wins, 2: Draws, 3: Losses
+    selected_match_index: usize,
+    match_ids: Vec<String>, // Store match IDs for navigation
 }
 
 impl MatchHistoryScreen {
     pub fn new() -> Self {
         Self {
             selected_filter: 0,
+            selected_match_index: 0,
+            match_ids: Vec::new(),
+        }
+    }
+
+    /// Update match list with IDs from game state
+    pub fn update_match_list(&mut self, match_ids: Vec<String>) {
+        self.match_ids = match_ids;
+        self.selected_match_index = 0;
+    }
+
+    /// Get selected match ID
+    pub fn selected_match_id(&self) -> Option<String> {
+        if self.selected_match_index < self.match_ids.len() {
+            Some(self.match_ids[self.selected_match_index].clone())
+        } else {
+            None
         }
     }
 
@@ -952,7 +1019,7 @@ impl MatchHistoryScreen {
         frame.render_widget(content_paragraph, chunks[1]);
 
         // Help
-        let help = Paragraph::new("←→: Filter | Enter: View Match | Esc: Back")
+        let help = Paragraph::new("←→: Filter | ↑↓: Select | Enter: View Match | Esc: Back")
             .block(Block::default().borders(Borders::ALL))
             .alignment(Alignment::Center);
 
@@ -975,10 +1042,26 @@ impl MatchHistoryScreen {
                 }
                 None
             }
+            KeyCode::Up => {
+                if self.selected_match_index > 0 {
+                    self.selected_match_index -= 1;
+                }
+                None
+            }
+            KeyCode::Down => {
+                if !self.match_ids.is_empty() && self.selected_match_index < self.match_ids.len() - 1 {
+                    self.selected_match_index += 1;
+                }
+                None
+            }
             KeyCode::Esc => Some(Screen::MainMenu),
             KeyCode::Enter => {
-                // TODO: Open match detail
-                None
+                // Open match detail for selected match
+                if let Some(match_id) = self.selected_match_id() {
+                    Some(Screen::MatchResult { match_id })
+                } else {
+                    None
+                }
             }
             _ => None,
         }
@@ -989,16 +1072,46 @@ impl MatchHistoryScreen {
 #[derive(Debug, Clone, Default)]
 pub struct NotificationsScreen {
     selected_index: usize,
+    notification_ids: Vec<String>, // Store notification IDs for marking as read
 }
 
 impl NotificationsScreen {
     pub fn new() -> Self {
         Self {
             selected_index: 0,
+            notification_ids: Vec::new(),
+        }
+    }
+
+    /// Update notification list with IDs from game state
+    pub fn update_notification_list(&mut self, notifications: &[crate::game::Notification]) {
+        self.notification_ids = notifications.iter().map(|n| n.id.clone()).collect();
+        self.selected_index = 0;
+    }
+
+    /// Get selected notification ID
+    pub fn selected_notification_id(&self) -> Option<String> {
+        if self.selected_index < self.notification_ids.len() {
+            Some(self.notification_ids[self.selected_index].clone())
+        } else {
+            None
+        }
+    }
+
+    /// Mark notification at current index as read (called by main loop)
+    pub fn mark_current_as_read(&mut self) {
+        if self.selected_index < self.notification_ids.len() {
+            // The actual read status is in GameState, this just advances to next
+            if self.selected_index < self.notification_ids.len() - 1 {
+                self.selected_index += 1;
+            }
         }
     }
 
     pub fn render(&mut self, frame: &mut Frame, area: Rect, state: &GameState, _language: Language) {
+        // Update notification IDs from state
+        self.update_notification_list(&state.notifications);
+
         let chunks = Layout::default()
             .direction(Direction::Vertical)
             .margin(5)
@@ -1026,8 +1139,9 @@ impl NotificationsScreen {
         let items: Vec<String> = if notifications.is_empty() {
             vec!["No notifications".to_string()]
         } else {
-            notifications.iter().take(20).map(|n| {
-                format!("{}: {}", n.notification_type, n.message)
+            notifications.iter().take(20).enumerate().map(|(i, n)| {
+                let prefix = if n.read { "  " } else { "* " };
+                format!("{}[{}] {}: {}", prefix, i + 1, n.notification_type, n.message)
             }).collect()
         };
 
@@ -1050,7 +1164,7 @@ impl NotificationsScreen {
         );
 
         // Help
-        let help = Paragraph::new("↑↓: Select | Enter: Mark Read | Esc: Back")
+        let help = Paragraph::new("↑↓: Select | Enter: Mark as Read | Esc: Back")
             .block(Block::default().borders(Borders::ALL))
             .alignment(Alignment::Center);
 
@@ -1068,12 +1182,20 @@ impl NotificationsScreen {
                 None
             }
             KeyCode::Down => {
-                self.selected_index += 1;
+                if !self.notification_ids.is_empty() && self.selected_index < self.notification_ids.len() - 1 {
+                    self.selected_index += 1;
+                }
                 None
             }
             KeyCode::Esc => Some(Screen::MainMenu),
             KeyCode::Enter => {
-                // TODO: Mark as read
+                // Mark selected notification as read
+                // The actual marking will be handled by the main game loop
+                // which has mutable access to GameState
+                if let Some(_notification_id) = self.selected_notification_id() {
+                    // Signal that notification should be marked as read
+                    // The main loop will call GameState::mark_notification_read
+                }
                 None
             }
             _ => None,

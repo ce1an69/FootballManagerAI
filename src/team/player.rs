@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 
 /// Player position on the field
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Hash)]
 pub enum Position {
     GK,
     CB,

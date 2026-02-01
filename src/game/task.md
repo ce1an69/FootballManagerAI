@@ -4,16 +4,16 @@
 
 **最后更新日期**: 2026-02-01
 
-**真实完成度**: 约 50%
+**真实完成度**: 约 85% (52/61 tasks)
 
 **主要缺失功能**:
-- Phase 2: 游戏流程控制（advance_to_next_match, update_after_match, is_last_match_of_round, mark_match_as_played）- 部分未实现
-- Phase 4: 游戏循环（GameLoop结构，run方法）- 未实现
-- Phase 6: 游戏初始化（start_new_game, load_game）- 未实现
+- Phase 6: 游戏初始化（start_new_game, load_game）- 部分实现（数据模块已实现）
 
 **已完成模块**:
-- Phase 1: 游戏状态（GameState, GameDate, Screen, Difficulty）- 完整实现
-- Phase 3: 事件系统（GameEvent, EventHandler, Effect）- 基础实现
+- Phase 1: 游戏状态（GameState, GameDate, Screen, Difficulty）- ✅ 完整实现
+- Phase 2: 游戏流程控制（flow.rs）- ✅ 完整实现
+- Phase 3: 事件系统（GameEvent, EventHandler, Effect）- ✅ 完整实现
+- Phase 4: 游戏循环（GameLoop, loop.rs）- ✅ 完整实现
 
 ---
 
@@ -58,11 +58,11 @@ assert_eq!(state.current_screen, Screen::TeamManagement);
 ## Phase 2: 游戏流程控制
 
 ### Task 2.1: 比赛流程
-- [ ] 实现 `advance_to_next_match()`
-- [ ] 查找玩家球队的下一场比赛
-- [ ] 返回比赛信息
+- [x] 实现 `advance_to_next_match()`
+- [x] 查找玩家球队的下一场比赛
+- [x] 返回比赛信息
 
-**Status**: ⚠️ 未实现 - 代码中未找到对应实现
+**Status**: ✅ Implemented in src/game/flow.rs
 
 **Acceptance Criteria**:
 ```rust
@@ -73,22 +73,22 @@ assert!(next_match.opponent.name.len() > 0);
 ---
 
 ### Task 2.2: 比赛后更新
-- [ ] 实现 `update_after_match()`
-- [ ] 更新联赛轮次
-- [ ] 标记比赛已打
-- [ ] 更新球队统计
+- [x] 实现 `update_after_match()`
+- [x] 更新联赛轮次
+- [x] 标记比赛已打
+- [x] 更新球队统计
 
-**Status**: ⚠️ 未实现 - 代码中未找到对应实现
+**Status**: ✅ Implemented in src/game/flow.rs
 
 **Acceptance Criteria**: 比赛后状态正确更新
 
 ---
 
 ### Task 2.3: 轮次判断
-- [ ] 实现 `is_last_match_of_round()`
-- [ ] 实现 `mark_match_as_played()`
+- [x] 实现 `is_last_match_of_round()`
+- [x] 实现 `mark_match_as_played()`
 
-**Status**: ⚠️ 未实现 - 代码中未找到对应实现
+**Status**: ✅ Implemented in src/game/flow.rs
 
 **Acceptance Criteria**: 轮次判断正确
 
@@ -136,21 +136,21 @@ assert_eq!(effect, Effect::Render);
 ## Phase 4: 游戏循环
 
 ### Task 4.1: GameLoop 结构
-- [ ] 定义 `GameLoop` struct
-- [ ] 实现构造函数
+- [x] 定义 `GameLoop` struct
+- [x] 实现构造函数
 
-**Status**: ⚠️ 未实现 - 代码中未找到对应实现
+**Status**: ✅ Implemented in src/game/loop.rs
 
 **Acceptance Criteria**: GameLoop 可以创建
 
 ---
 
 ### Task 4.2: 主循环
-- [ ] 实现 `run()` 方法
-- [ ] 实现渲染 → 输入 → 事件 → 副作用循环
-- [ ] 处理退出
+- [x] 实现 `run()` 方法
+- [x] 实现渲染 → 输入 → 事件 → 副作用循环
+- [x] 处理退出
 
-**Status**: ⚠️ 未实现 - 代码中未找到对应实现
+**Status**: ✅ Implemented in src/game/loop.rs
 
 **Acceptance Criteria**: 游戏循环正常运行
 
@@ -170,11 +170,11 @@ assert_eq!(effect, Effect::Render);
 ---
 
 ### Task 5.2: 保存功能
-- [ ] 实现 `save()` 方法
-- [ ] 保存到数据库
-- [ ] 生成元数据
+- [x] 实现 `save()` 方法
+- [x] 保存到数据库
+- [x] 生成元数据
 
-**Status**: ⚠️ 未实现 - 代码中未找到对应实现
+**Status**: ✅ Implemented in src/data/save_manager.rs (GameState uses it)
 
 **Acceptance Criteria**:
 ```rust
@@ -185,11 +185,11 @@ state.save(1)?;
 ---
 
 ### Task 5.3: 加载功能
-- [ ] 实现 `load()` 静态方法
-- [ ] 从数据库加载
-- [ ] 恢复GameState
+- [x] 实现 `load()` 静态方法
+- [x] 从数据库加载
+- [x] 恢复GameState
 
-**Status**: ⚠️ 未实现 - 代码中未找到对应实现
+**Status**: ✅ Implemented in src/data/save_manager.rs (GameState uses it)
 
 **Acceptance Criteria**:
 ```rust
@@ -200,10 +200,10 @@ let state = GameState::load(1)?;
 ---
 
 ### Task 5.4: 存档列表
-- [ ] 实现 `list_saves()`
-- [ ] 返回可用存档信息
+- [x] 实现 `list_saves()`
+- [x] 返回可用存档信息
 
-**Status**: ⚠️ 未实现 - 代码中未找到对应实现
+**Status**: ✅ Implemented in src/data/save_manager.rs
 
 **Acceptance Criteria**: 能列出所有存档
 
@@ -275,6 +275,24 @@ assert_eq!(multiplier, 1.5);
 - [x] 测试完整新游戏流程
 - [x] 测试存档循环
 - [x] 测试多场比赛流程
+
+---
+
+## 更新记录
+
+### 2026-02-01 状态更新
+- ✅ Phase 2 (游戏流程控制) 标记为完成 - 实现在 src/game/flow.rs
+  - advance_to_next_match() ✅
+  - update_after_match() ✅
+  - is_last_match_of_round() ✅
+- ✅ Phase 4 (游戏循环) 标记为完成 - 实现在 src/game/loop.rs
+  - GameLoop struct ✅
+  - run() method ✅
+- ✅ Phase 5 (存档系统) 标记为完成 - 实现在 src/data/save_manager.rs
+  - save() ✅
+  - load() ✅
+  - list_saves() ✅
+- 更新完成度：50% → 85% (52/61 tasks)
 
 ---
 
