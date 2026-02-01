@@ -1,5 +1,5 @@
 use football_manager_ai::game::GameState;
-use football_manager_ai::game::init::{quick_start, quick_start_with_llm, load_game};
+use football_manager_ai::game::init::{quick_start_with_llm, load_game};
 use football_manager_ai::ui::TuiApp;
 use football_manager_ai::data::SaveManager;
 use std::io;
