@@ -1,0 +1,341 @@
+# AI Module Implementation Tasks
+
+## Phase 1: 数据生成器基础
+
+### Task 1.1: 工具函数
+- [ ] 实现 `generate_uuid()` - 生成唯一ID
+- [ ] 实现 `pick_random<T>(range: Range<T>) -> T` - 范围随机选择
+- [ ] 实现 `generate_name()` - 生成随机球员姓名
+- [ ] 实现 `generate_team_name()` - 生成随机球队名
+
+**Acceptance Criteria**:
+```rust
+let name = generate_name();
+assert!(!name.is_empty());
+assert!(name.contains(' '));
+```
+
+---
+
+### Task 1.2: 生成联赛
+- [ ] 实现 `generate_league()`
+- [ ] 设置默认参数（20队，38轮）
+- [ ] 返回完整的 League 结构
+
+**Acceptance Criteria**:
+```rust
+let league = generate_league();
+assert_eq!(league.total_rounds, 38);
+assert_eq!(league.current_round, 0);
+```
+
+---
+
+### Task 1.3: 生成单个球员
+- [ ] 实现 `generate_player(team_id, position, skill_level, age_range)`
+- [ ] 实现位置特定的属性生成
+- [ ] 实现属性随机化（基于skill_level）
+- [ ] 生成潜在能力值
+- [ ] 计算市场价值和薪资
+
+**Acceptance Criteria**:
+```rust
+let player = generate_player("team1".to_string(), Position::ST, 100, 20..25);
+assert_eq!(player.position, Position::ST);
+assert!(player.age >= 20 && player.age <= 25);
+assert!(player.finishing > 50);  // ST应该有较高的射门
+```
+
+---
+
+### Task 1.4: 按位置生成球员组
+- [ ] 实现 `generate_goalkeepers()`
+- [ ] 实现 `generate_defenders()`
+- [ ] 实现 `generate_midfielders()`
+- [ ] 实现 `generate_forwards()`
+
+**Acceptance Criteria**: 每个函数生成指定数量的球员，位置正确
+
+---
+
+### Task 1.5: 生成完整球队
+- [ ] 实现 `generate_players_for_team()`
+- [ ] 确保生成25-30个球员（包含各位置）
+- [ ] 实现不同实力的球队（基于team_level）
+
+**Acceptance Criteria**:
+```rust
+let players = generate_players_for_team("team1".to_string(), 150, 25);
+assert!(players.len() >= 25);
+assert!(players.iter().filter(|p| p.position == Position::GK).count() >= 2);
+```
+
+---
+
+### Task 1.6: 生成球队
+- [ ] 实现 `generate_team(style, league_id)`
+- [ ] 根据风格设置预算
+- [ ] 生成球员
+- [ ] 设置默认战术
+
+**Acceptance Criteria**:
+```rust
+let team = generate_team(TeamStyle::Balanced, "league1".to_string());
+assert!(!team.players.is_empty());
+assert!(team.budget > 0);
+```
+
+---
+
+### Task 1.7: 生成赛程
+- [ ] 实现 `generate_schedule(teams)`
+- [ ] 实现双循环赛程算法
+- [ ] 确保每队在每轮只比赛一次
+- [ ] 主客场平衡
+
+**Acceptance Criteria**:
+```rust
+let teams = vec!["t1".to_string(), "t2".to_string()];
+let schedule = generate_schedule(teams);
+assert_eq!(schedule.rounds.len(), 2);  // 双循环
+```
+
+---
+
+## Phase 2: 进度系统
+
+### Task 2.1: 比赛后更新
+- [ ] 实现 `update_players_after_match()`
+- [ ] 实现疲劳增加逻辑
+- [ ] 实现伤病概率
+- [ ] 实现士气变化
+- [ ] 实现体能消耗
+
+**Acceptance Criteria**:
+```rust
+let mut players = vec![player];
+let mut minutes = HashMap::new();
+minutes.insert(player.id.clone(), 90);
+update_players_after_match(&mut players, minutes);
+assert!(players[0].fatigue > 0);
+```
+
+---
+
+### Task 2.2: 休息期间更新
+- [ ] 实现 `update_players_during_break()`
+- [ ] 实现疲劳恢复
+- [ ] 实现体能恢复
+- [ ] 实现伤病恢复
+
+**Acceptance Criteria**:
+```rust
+let mut player = Player::new(...);
+player.fatigue = 80;
+update_players_during_break(&mut [player], 7);
+assert!(players[0].fatigue < 80);
+```
+
+---
+
+### Task 2.3: 年龄增长
+- [ ] 实现 `age_players()`
+- [ ] 实现青年球员成长（16-21岁）
+- [ ] 实现巅峰期波动（22-28岁）
+- [ ] 实现老年衰退（29岁+）
+- [ ] 实现身体属性衰退
+
+**Acceptance Criteria**:
+```rust
+let mut player = create_test_player();
+player.age = 18;
+player.current_ability = 100;
+player.potential_ability = 150;
+age_players(&mut [player]);
+assert_eq!(player.age, 19);
+assert!(player.current_ability > 100);  // 应该增长
+```
+
+---
+
+## Phase 3: 比赛模拟器
+
+### Task 3.1: 进球概率计算
+- [ ] 实现 `calculate_goal_chance(attack, defense)`
+- [ ] 实现实力差距影响
+- [ ] 实现随机波动
+- [ ] 概率限制在合理范围
+
+**Acceptance Criteria**:
+```rust
+let chance = calculate_goal_chance(150, 100);
+assert!(chance >= 0.005 && chance <= 0.10);
+assert!(chance > 0.03);  // 强队打弱队概率更高
+```
+
+---
+
+### Task 3.2: 快速模拟
+- [ ] 实现 `simulate_quick_match()`
+- [ ] 实现45个回合
+- [ ] 生成进球事件
+- [ ] 返回比分和事件
+
+**Acceptance Criteria**:
+```rust
+let (home, away, events) = simulate_quick_match(120, 100, 100, 100);
+assert!(home <= 10);
+assert!(away <= 10);
+```
+
+---
+
+### Task 3.3: 单分钟模拟
+- [ ] 实现 `simulate_minute()`
+- [ ] 处理双方进攻
+- [ ] 生成随机事件
+- [ ] 返回该分钟的事件列表
+
+**Acceptance Criteria**: 返回的事件列表合理
+
+---
+
+### Task 3.4: 文本直播模式
+- [ ] 实现 `simulate_live_match()`
+- [ ] 逐步生成90分钟事件
+- [ ] 实现中场休息逻辑
+- [ ] 生成详细事件列表
+
+**Acceptance Criteria**:
+```rust
+let result = simulate_match(&home, &away, &[], &[], MatchMode::Live);
+assert_eq!(result.match_mode, MatchMode::Live);
+assert!(!result.events.is_empty());
+```
+
+---
+
+### Task 3.5: 比赛统计计算
+- [ ] 实现 `calculate_possession()`
+- [ ] 实现 `calculate_shots()`
+- [ ] 基于双方实力差
+
+**Acceptance Criteria**: 统计数据合理
+
+---
+
+### Task 3.6: 主模拟函数
+- [ ] 实现 `simulate_match()`
+- [ ] 处理两种模式
+- [ ] 集成所有子函数
+- [ ] 返回完整的 MatchResult
+
+**Acceptance Criteria**:
+```rust
+let result = simulate_match(&home, &away, &home_players, &away_players, MatchMode::Quick);
+assert!(result.home_score >= 0);
+```
+
+---
+
+## Phase 4: 随机事件
+
+### Task 4.1: 定义事件类型
+- [ ] 定义 `GameEvent` enum
+- [ ] 定义 `InjuryType` enum
+- [ ] 添加所有事件变体
+
+**Acceptance Criteria**: 事件类型完整
+
+---
+
+### Task 4.2: 实现事件生成
+- [ ] 实现 `generate_random_event()`
+- [ ] 实现概率控制
+- [ ] 实现事件参数填充
+
+**Acceptance Criteria**:
+```rust
+if let Some(event) = generate_random_event() {
+    // 事件应该有合理的参数
+}
+```
+
+---
+
+### Task 4.3: 特定事件生成器
+- [ ] 实现 `generate_injury_event()`
+- [ ] 实现 `generate_transfer_offer()`
+- [ ] 实现 `generate_media_story()`
+
+**Acceptance Criteria**: 每个事件生成器返回合理的事件
+
+---
+
+## Phase 5: AI球队决策 (可选，MVP后)
+
+### Task 5.1: 转会决策
+- [ ] 实现 `decide_transfer_targets()`
+- [ ] 基于球队弱点
+- [ ] 考虑预算
+
+### Task 5.2: 战术选择
+- [ ] 实现 `select_tactic()`
+- [ ] 基于球队风格
+- [ ] 考虑对手实力
+
+---
+
+## Phase 6: 测试
+
+### Task 6.1: 生成器测试
+- [ ] 测试联赛生成
+- [ ] 测试球队生成
+- [ ] 测试球员生成
+- [ ] 测试赛程生成
+
+### Task 6.2: 进度测试
+- [ ] 测试年龄增长
+- [ ] 测试疲劳系统
+- [ ] 测试伤病恢复
+
+### Task 6.3: 比赛模拟测试
+- [ ] 测试快速模拟
+- [ ] 测试文本直播
+- [ ] 测试概率分布
+- [ ] 测试统计计算
+
+---
+
+## 依赖关系
+
+```
+Phase 1 (Generator) → Phase 2 (Progression) → Phase 3 (Match Sim) → Phase 4 (Events)
+                                                                      ↓
+                                                              Phase 5 (AI Logic)
+                                                                      ↓
+                                                              Phase 6 (Tests)
+```
+
+---
+
+## 预估时间
+
+- Phase 1: 5-7天
+- Phase 2: 3-4天
+- Phase 3: 7-10天（核心功能，需要仔细调整）
+- Phase 4: 2-3天
+- Phase 5: 3-4天（可选）
+- Phase 6: 3-4天
+
+**总计**: 约 25-35 天
+
+---
+
+## 注意事项
+
+1. **随机性测试**: 需要运行多次模拟确保概率合理
+2. **平衡性**: 比赛模拟需要大量测试和调整
+3. **性能**: 比赛模拟应该是快速的（< 1秒）
+4. **真实性**: 参考真实足球统计数据
+5. **可测试性**: 使用依赖注入，便于单元测试
