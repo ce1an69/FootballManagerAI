@@ -66,6 +66,10 @@ impl Database {
     pub fn run_migrations(&self) -> Result<(), DatabaseError> {
         // Create tables
         self.create_tables()?;
+
+        // Create performance indexes
+        self.create_indexes()?;
+
         Ok(())
     }
 
@@ -300,6 +304,13 @@ impl Database {
             [],
         ).map_err(|e| DatabaseError::MigrationError(e.to_string()))?;
 
+        Ok(())
+    }
+
+    /// Create performance indexes
+    fn create_indexes(&self) -> Result<(), DatabaseError> {
+        crate::data::indexes::create_indexes(&self.conn.read().unwrap())
+            .map_err(|e| DatabaseError::MigrationError(format!("Failed to create indexes: {}", e)))?;
         Ok(())
     }
 

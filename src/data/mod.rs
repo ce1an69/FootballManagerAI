@@ -12,6 +12,7 @@ mod team_statistics_repo;
 mod transfer_repo;
 mod transfer_history_repo;
 mod save_manager;
+mod indexes;
 
 // Re-exports
 pub use database::{Database, DatabaseError};

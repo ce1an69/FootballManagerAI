@@ -373,6 +373,146 @@ impl PlayerRepository for SqlitePlayerRepository {
         Ok(())
     }
 
+    fn create_batch(&self, players: &[Player]) -> Result<(), DatabaseError> {
+        if players.is_empty() {
+            return Ok(());
+        }
+
+        let conn = self.conn.write().unwrap();
+
+        // Begin transaction for better performance
+        let tx = conn.unchecked_transaction()
+            .map_err(|e| DatabaseError::QueryError(format!("Failed to start transaction: {}", e)))?;
+
+        // Use the same SQL as create() method
+        let sql = "INSERT INTO players (
+                id, team_id, name, age, nationality, position, second_positions, preferred_foot,
+                height, weight,
+                corners, crossing, dribbling, finishing, heading, long_shots, long_throws,
+                marking, passing, penalties, tackling, technique,
+                aggression, anticipation, bravery, creativity, decisions, concentration,
+                positioning, off_the_ball, work_rate, pressure, teamwork, vision,
+                acceleration, agility, balance, pace, stamina, strength,
+                aerial_reach, command_of_area, communication, eccentricity, handling, kicking,
+                throwing, reflexes, rushing_out, gk_positioning,
+                potential_ability, current_ability, adaptability, ambition, professionalism,
+                loyalty, injury_proneness, controversy, match_fitness, morale, status, injury_days,
+                fatigue, wage, contract_years, market_value
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+
+        let mut stmt = tx.prepare_cached(sql)
+            .map_err(|e| DatabaseError::QueryError(format!("Failed to prepare statement: {}", e)))?;
+
+        // Insert all players in a transaction
+        for player in players {
+            stmt.execute(params![
+                player.id,
+                player.team_id,
+                player.name,
+                player.age,
+                player.nationality,
+                format!("{:?}", player.position),
+                player.second_positions.iter().map(|p| format!("{:?}", p)).collect::<Vec<_>>().join(","),
+                format!("{:?}", player.preferred_foot),
+                player.height,
+                player.weight,
+                player.corners,
+                player.crossing,
+                player.dribbling,
+                player.finishing,
+                player.heading,
+                player.long_shots,
+                player.long_throws,
+                player.marking,
+                player.passing,
+                player.penalties,
+                player.tackling,
+                player.technique,
+                player.aggression,
+                player.anticipation,
+                player.bravery,
+                player.creativity,
+                player.decisions,
+                player.concentration,
+                player.positioning,
+                player.off_the_ball,
+                player.work_rate,
+                player.pressure,
+                player.teamwork,
+                player.vision,
+                player.acceleration,
+                player.agility,
+                player.balance,
+                player.pace,
+                player.stamina,
+                player.strength,
+                player.aerial_reach,
+                player.command_of_area,
+                player.communication,
+                player.eccentricity,
+                player.handling,
+                player.kicking,
+                player.throwing,
+                player.reflexes,
+                player.rushing_out,
+                player.gk_positioning,
+                player.potential_ability,
+                player.current_ability,
+                player.adaptability,
+                player.ambition,
+                player.professionalism,
+                player.loyalty,
+                player.injury_proneness,
+                player.controversy,
+                player.match_fitness,
+                player.morale,
+                format!("{:?}", player.status),
+                player.injury_days,
+                player.fatigue,
+                player.wage,
+                player.contract_years,
+                player.market_value,
+            ]).map_err(|e| DatabaseError::QueryError(format!("Failed to insert player {}: {}", player.id, e)))?;
+        }
+
+        drop(stmt); // Ensure stmt is dropped before commit
+
+        // Commit the transaction
+        tx.commit()
+            .map_err(|e| DatabaseError::QueryError(format!("Failed to commit transaction: {}", e)))?;
+
+        Ok(())
+    }
+
+    fn delete_batch(&self, ids: &[String]) -> Result<(), DatabaseError> {
+        if ids.is_empty() {
+            return Ok(());
+        }
+
+        let conn = self.conn.write().unwrap();
+
+        // Begin transaction
+        let tx = conn.unchecked_transaction()
+            .map_err(|e| DatabaseError::QueryError(format!("Failed to start transaction: {}", e)))?;
+
+        // Delete all players in a transaction using a single prepared statement
+        {
+            let sql = "DELETE FROM players WHERE id = ?";
+            let mut stmt = tx.prepare_cached(sql)
+                .map_err(|e| DatabaseError::QueryError(format!("Failed to prepare statement: {}", e)))?;
+
+            for id in ids {
+                stmt.execute(params![id])
+                    .map_err(|e| DatabaseError::QueryError(format!("Failed to delete player {}: {}", id, e)))?;
+            }
+        } // stmt is dropped here
+
+        tx.commit()
+            .map_err(|e| DatabaseError::QueryError(format!("Failed to commit transaction: {}", e)))?;
+
+        Ok(())
+    }
+
     fn get_free_agents(&self) -> Result<Vec<Player>, DatabaseError> {
         let conn = self.conn.read().unwrap();
 
@@ -555,5 +695,103 @@ mod tests {
         let free_agents = repo.get_free_agents().unwrap();
         assert_eq!(free_agents.len(), 1);
         assert_eq!(free_agents[0].id, "player2");
+    }
+
+    #[test]
+    fn test_create_batch() {
+        let db = Database::in_memory().unwrap();
+        db.run_migrations().unwrap();
+        let conn = db.conn.clone();
+        let repo = SqlitePlayerRepository::new(conn.clone());
+
+        // Create league and team first
+        conn.write().unwrap().execute(
+            "INSERT INTO leagues (id, name, current_round, total_rounds) VALUES (?, ?, ?, ?)",
+            rusqlite::params!["league1", "League 1", 0, 38],
+        ).unwrap();
+
+        conn.write().unwrap().execute(
+            "INSERT INTO teams (id, name, league_id, budget, formation, attacking_mentality, defensive_height, passing_style, tempo) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            rusqlite::params!["team1", "Team 1", "league1", 1000000, "4-4-2", 50, "Medium", "Mixed", "Medium"],
+        ).unwrap();
+
+        // Create multiple players
+        let players = vec![
+            create_test_player("player1", "Player 1"),
+            create_test_player("player2", "Player 2"),
+            create_test_player("player3", "Player 3"),
+        ];
+
+        repo.create_batch(&players).unwrap();
+
+        // Verify all players were created
+        let team_players = repo.get_by_team("team1").unwrap();
+        assert_eq!(team_players.len(), 3);
+    }
+
+    #[test]
+    fn test_delete_batch() {
+        let db = Database::in_memory().unwrap();
+        db.run_migrations().unwrap();
+        let conn = db.conn.clone();
+        let repo = SqlitePlayerRepository::new(conn.clone());
+
+        // Create league and team first
+        conn.write().unwrap().execute(
+            "INSERT INTO leagues (id, name, current_round, total_rounds) VALUES (?, ?, ?, ?)",
+            rusqlite::params!["league1", "League 1", 0, 38],
+        ).unwrap();
+
+        conn.write().unwrap().execute(
+            "INSERT INTO teams (id, name, league_id, budget, formation, attacking_mentality, defensive_height, passing_style, tempo) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            rusqlite::params!["team1", "Team 1", "league1", 1000000, "4-4-2", 50, "Medium", "Mixed", "Medium"],
+        ).unwrap();
+
+        // Create multiple players
+        let player1 = create_test_player("player1", "Player 1");
+        let player2 = create_test_player("player2", "Player 2");
+        let player3 = create_test_player("player3", "Player 3");
+
+        repo.create(&player1).unwrap();
+        repo.create(&player2).unwrap();
+        repo.create(&player3).unwrap();
+
+        // Delete batch
+        repo.delete_batch(&vec!["player1".to_string(), "player2".to_string()]).unwrap();
+
+        // Verify only player3 remains
+        let remaining = repo.get_by_team("team1").unwrap();
+        assert_eq!(remaining.len(), 1);
+        assert_eq!(remaining[0].id, "player3");
+    }
+
+    #[test]
+    fn test_batch_performance() {
+        let db = Database::in_memory().unwrap();
+        db.run_migrations().unwrap();
+        let conn = db.conn.clone();
+        let repo = SqlitePlayerRepository::new(conn.clone());
+
+        // Create league and team first
+        conn.write().unwrap().execute(
+            "INSERT INTO leagues (id, name, current_round, total_rounds) VALUES (?, ?, ?, ?)",
+            rusqlite::params!["league1", "League 1", 0, 38],
+        ).unwrap();
+
+        conn.write().unwrap().execute(
+            "INSERT INTO teams (id, name, league_id, budget, formation, attacking_mentality, defensive_height, passing_style, tempo) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            rusqlite::params!["team1", "Team 1", "league1", 1000000, "4-4-2", 50, "Medium", "Mixed", "Medium"],
+        ).unwrap();
+
+        // Create 100 players using batch insert
+        let players: Vec<Player> = (0..100)
+            .map(|i| create_test_player(&format!("player{}", i), &format!("Player {}", i)))
+            .collect();
+
+        repo.create_batch(&players).unwrap();
+
+        // Verify all players were created
+        let team_players = repo.get_by_team("team1").unwrap();
+        assert_eq!(team_players.len(), 100);
     }
 }

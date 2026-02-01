@@ -16,10 +16,12 @@ pub trait TeamRepository {
 /// Repository for Player data access
 pub trait PlayerRepository {
     fn create(&self, player: &Player) -> Result<(), DatabaseError>;
+    fn create_batch(&self, players: &[Player]) -> Result<(), DatabaseError>;
     fn get_by_id(&self, id: &str) -> Result<Player, DatabaseError>;
     fn get_by_team(&self, team_id: &str) -> Result<Vec<Player>, DatabaseError>;
     fn update(&self, player: &Player) -> Result<(), DatabaseError>;
     fn delete(&self, id: &str) -> Result<(), DatabaseError>;
+    fn delete_batch(&self, ids: &[String]) -> Result<(), DatabaseError>;
     fn get_free_agents(&self) -> Result<Vec<Player>, DatabaseError>;
 }
 
