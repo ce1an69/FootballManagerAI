@@ -1,5 +1,5 @@
 use football_manager_ai::game::GameState;
-use football_manager_ai::game::init::{quick_start, load_game};
+use football_manager_ai::game::init::{quick_start, quick_start_with_llm, load_game};
 use football_manager_ai::ui::TuiApp;
 use football_manager_ai::data::SaveManager;
 use std::io;
@@ -114,9 +114,13 @@ fn setup_game() -> Result<GameState, Box<dyn std::error::Error>> {
         return Ok(game_state);
     }
 
-    // No saves found, create new game using quick_start
+    // No saves found, create new game
     println!("No saved games found. Creating new game...");
-    let (game_state, _db) = quick_start()?;
+
+    // Try to use LLM, requires runtime for async operations
+    let rt = tokio::runtime::Runtime::new()?;
+    let (game_state, _db) = rt.block_on(quick_start_with_llm())?;
+
     println!("Game created successfully!");
 
     Ok(game_state)
