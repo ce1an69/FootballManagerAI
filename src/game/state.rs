@@ -210,6 +210,22 @@ pub enum NotificationType {
     System,
 }
 
+impl std::fmt::Display for NotificationType {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            NotificationType::Transfer => write!(f, "Transfer"),
+            NotificationType::Injury => write!(f, "Injury"),
+            NotificationType::Contract => write!(f, "Contract"),
+            NotificationType::Match => write!(f, "Match"),
+            NotificationType::Finance => write!(f, "Finance"),
+            NotificationType::PlayerMorale => write!(f, "Morale"),
+            NotificationType::Achievement => write!(f, "Achievement"),
+            NotificationType::News => write!(f, "News"),
+            NotificationType::System => write!(f, "System"),
+        }
+    }
+}
+
 /// Notification priority
 #[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
 pub enum NotificationPriority {

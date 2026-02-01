@@ -79,6 +79,12 @@ pub enum Formation {
     FiveTwoTwoOne,
 }
 
+impl std::fmt::Display for Formation {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.name())
+    }
+}
+
 impl Formation {
     /// Get positions for this formation
     pub fn positions(&self) -> Vec<Position> {
@@ -168,6 +174,16 @@ pub enum DefensiveHeight {
     High,
 }
 
+impl std::fmt::Display for DefensiveHeight {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            DefensiveHeight::Low => write!(f, "Low"),
+            DefensiveHeight::Medium => write!(f, "Medium"),
+            DefensiveHeight::High => write!(f, "High"),
+        }
+    }
+}
+
 /// Passing style
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub enum PassingStyle {
@@ -176,12 +192,32 @@ pub enum PassingStyle {
     Long,
 }
 
+impl std::fmt::Display for PassingStyle {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            PassingStyle::Short => write!(f, "Short"),
+            PassingStyle::Mixed => write!(f, "Mixed"),
+            PassingStyle::Long => write!(f, "Long"),
+        }
+    }
+}
+
 /// Tempo of play
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub enum Tempo {
     Slow,
     Medium,
     Fast,
+}
+
+impl std::fmt::Display for Tempo {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Tempo::Slow => write!(f, "Slow"),
+            Tempo::Medium => write!(f, "Medium"),
+            Tempo::Fast => write!(f, "Fast"),
+        }
+    }
 }
 
 /// Player roles (FM-style)
