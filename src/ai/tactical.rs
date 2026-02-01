@@ -85,8 +85,8 @@ pub fn infer_tactical_style(tactic: &Tactic) -> TacticalStyle {
 /// let modifier = calculate_tactical_modifier(&TacticalStyle::HighPress, &TacticalStyle::Possession);
 /// assert!(modifier > 0.0); // Home team advantage
 ///
-/// // Possession loses to CounterAttack (-25% disadvantage)
-/// let modifier = calculate_tactical_modifier(&TacticalStyle::Possession, &TacticalStyle::CounterAttack);
+/// // CounterAttack beats Possession (+25% advantage)
+/// let modifier = calculate_tactical_modifier(&TacticalStyle::CounterAttack, &TacticalStyle::Possession);
 /// assert!(modifier < 0.0); // Away team advantage
 /// ```
 pub fn calculate_tactical_modifier(

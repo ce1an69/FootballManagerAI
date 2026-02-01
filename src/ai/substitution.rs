@@ -87,19 +87,6 @@ impl SubstitutionAdvisor {
     ///
     /// # Returns
     /// A vector of substitution suggestions, sorted by urgency (highest first)
-    ///
-    /// # Examples
-    /// ```no_run
-    /// use football_manager_ai::ai::substitution::SubstitutionAdvisor;
-    ///
-    /// let suggestions = SubstitutionAdvisor::analyze(
-    ///     75,
-    ///     &home_starting_11,
-    ///     &home_subs,
-    ///     1, // Home team leading by 1 goal
-    ///     3, // 3 subs remaining
-    /// );
-    /// ```
     pub fn analyze(
         minute: u8,
         players_on_pitch: &[Player],

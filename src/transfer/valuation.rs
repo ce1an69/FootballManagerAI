@@ -16,6 +16,9 @@ use crate::team::Player;
 ///
 /// # Examples
 /// ```
+/// # use football_manager_ai::team::{Player, Position};
+/// # use football_manager_ai::transfer::evaluate_player_value;
+/// # let player = Player::new("player1".to_string(), "Test Player".to_string(), Position::ST);
 /// let value = evaluate_player_value(&player);
 /// assert!(value > 0);
 /// ```
@@ -89,6 +92,9 @@ pub fn evaluate_player_value(player: &Player) -> u64 {
 ///
 /// # Examples
 /// ```
+/// # use football_manager_ai::team::{Player, Position};
+/// # use football_manager_ai::transfer::{evaluate_player_value, predict_potential_value};
+/// # let player = Player::new("player1".to_string(), "Test Player".to_string(), Position::ST);
 /// let current_value = evaluate_player_value(&player);
 /// let future_value = predict_potential_value(&player, 2);
 /// // Young players should have higher future value

@@ -1,9 +1,9 @@
 // AI module - Data generation and match simulation
 
 mod generator;
-mod match_sim;
-mod tactical;
-mod substitution;
+pub mod match_sim;
+pub mod tactical;
+pub mod substitution;
 pub mod progression;
 pub mod transfer_decision;
 pub mod events;

@@ -136,7 +136,6 @@ mod integration_tests {
             assert!(player.current_ability > 0);
             assert!(player.potential_ability >= player.current_ability);
             assert!(player.wage > 0);
-            assert!(player.contract_years >= 0);
         }
     }
 
@@ -247,7 +246,6 @@ mod integration_tests {
 
         // Verify each player has valid contract data
         for player in &players {
-            assert!(player.contract_years >= 0);
             assert!(player.wage > 0);
         }
     }
