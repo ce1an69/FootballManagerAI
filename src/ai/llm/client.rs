@@ -4,8 +4,11 @@
 //! with the OpenAI chat completions API format.
 
 use crate::ai::llm::{LlmConfig, LlmError, Result};
+use async_stream::stream;
+use futures::stream::{Stream, StreamExt};
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
+use std::pin::Pin;
 use std::time::Duration;
 
 /// Chat message with role and content
@@ -137,6 +140,98 @@ impl LLMClient {
 
         Ok(content)
     }
+
+    /// Send a streaming chat completion request
+    ///
+    /// This method sends a list of messages to the LLM API and returns
+    /// a stream of content chunks as they arrive from the API.
+    pub fn chat_stream(
+        &self,
+        messages: Vec<Message>,
+    ) -> Pin<Box<dyn Stream<Item = Result<String>> + Send>> {
+        let api_key = match self.config.api_key.as_ref() {
+            Some(key) => key.clone(),
+            None => {
+                return Box::pin(stream! {
+                    yield Err(LlmError::MissingApiKey);
+                });
+            }
+        };
+
+        let url = format!("{}/chat/completions", self.config.url);
+        let request = ChatRequest {
+            model: self.config.model_name.clone(),
+            messages,
+            temperature: 0.7,
+            max_tokens: 2000,
+        };
+
+        let client = self.client.clone();
+
+        Box::pin(stream! {
+            let response = client
+                .post(&url)
+                .header("Authorization", format!("Bearer {}", api_key))
+                .header("Content-Type", "application/json")
+                .json(&request)
+                .header("Accept", "text/event-stream")
+                .send()
+                .await?;
+
+            if !response.status().is_success() {
+                let status = response.status();
+                let error_text = response.text().await.unwrap_or_default();
+                yield Err(LlmError::ApiError {
+                    message: format!("HTTP {}: {}", status, error_text),
+                    code: Some(status.as_u16().to_string()),
+                });
+                return;
+            }
+
+            let mut stream = response.bytes_stream();
+
+            while let Some(chunk_result) = stream.next().await {
+                let chunk = chunk_result.map_err(|e| LlmError::Request(e))?;
+
+                let text = String::from_utf8_lossy(&chunk);
+                for line in text.lines() {
+                    if line.starts_with("data: ") {
+                        let data = &line[6..];
+                        if data == "[DONE]" {
+                            return;
+                        }
+
+                        if let Ok(chunk_data) = serde_json::from_str::<StreamChunk>(data) {
+                            if let Some(choice) = chunk_data.choices.first() {
+                                if !choice.delta.content.is_empty() {
+                                    yield Ok(choice.delta.content.clone());
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        })
+    }
+}
+
+/// Streaming response chunk
+#[derive(Debug, Deserialize)]
+struct StreamChunk {
+    choices: Vec<StreamChoice>,
+}
+
+/// Single choice in streaming response
+#[derive(Debug, Deserialize)]
+struct StreamChoice {
+    delta: Delta,
+}
+
+/// Delta content in streaming response
+#[derive(Debug, Deserialize)]
+struct Delta {
+    #[serde(default)]
+    content: String,
 }
 
 #[cfg(test)]
