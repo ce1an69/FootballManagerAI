@@ -71,8 +71,7 @@ fn run_app(
     loop {
         // Render current screen
         terminal.draw(|f| {
-            let size = f.size();
-
+            let size = f.area();
             // Draw title bar
             let title = ratatui::widgets::Paragraph::new(app.get_title())
                 .style(ratatui::style::Style::default().fg(ratatui::style::Color::Cyan));
