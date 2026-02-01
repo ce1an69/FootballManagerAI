@@ -429,6 +429,11 @@ impl MainMenuScreen {
     pub fn selected_action(&self) -> MenuAction {
         self.menu_items[self.selected_index]
     }
+
+    /// Check if the selected action is ExitGame
+    pub fn is_exit_selected(&self) -> bool {
+        matches!(self.selected_action(), MenuAction::ExitGame)
+    }
 }
 
 #[cfg(test)]

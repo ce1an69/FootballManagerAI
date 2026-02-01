@@ -1,14 +1,31 @@
 use crate::game::{GameState, Screen};
 use crate::ui::i18n::{Language, TranslationKey, t};
+use crate::ui::screens::*;
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 
 /// Main TUI application
-#[derive(Debug, Clone)]
 pub struct TuiApp {
     pub running: bool,
     pub game_state: GameState,
     pub language: Language,
     pub should_quit: bool,
+
+    // Screen state instances
+    main_menu: MainMenuScreen,
+    settings: SettingsScreen,
+    save_load: SaveLoadScreen,
+    league_table: LeagueTableScreen,
+    match_mode_selection: MatchModeSelectionScreen,
+    player_detail: Option<PlayerDetailScreen>,
+    match_result: Option<MatchResultScreen>,
+    season_summary: Option<SeasonSummaryScreen>,
+    match_history: MatchHistoryScreen,
+    notifications: NotificationsScreen,
+    tactics: TacticsScreen,
+    transfer_market: TransferMarketScreen,
+    team_management: TeamManagementScreen,
+    match_live: Option<MatchLiveScreen>,
+    finance_report: FinanceReportScreen,
 }
 
 impl TuiApp {
@@ -19,23 +36,105 @@ impl TuiApp {
             game_state,
             language: Language::English,
             should_quit: false,
+
+            // Initialize screen states
+            main_menu: MainMenuScreen::new(),
+            settings: SettingsScreen::new(),
+            save_load: SaveLoadScreen::new(),
+            league_table: LeagueTableScreen::new(),
+            match_mode_selection: MatchModeSelectionScreen::new(),
+            player_detail: None,
+            match_result: None,
+            season_summary: None,
+            match_history: MatchHistoryScreen::new(),
+            notifications: NotificationsScreen::new(),
+            tactics: TacticsScreen::new(),
+            transfer_market: TransferMarketScreen::new(),
+            team_management: TeamManagementScreen::new(),
+            match_live: None,
+            finance_report: FinanceReportScreen::new(),
         }
     }
 
     /// Handle key event
     pub fn handle_key_event(&mut self, key: KeyEvent) {
+        // Handle global quit shortcuts
         match key.code {
             KeyCode::Char('q') => {
                 if key.modifiers.contains(KeyModifiers::CONTROL) {
                     self.quit();
+                    return;
                 } else if self.game_state.current_screen == Screen::MainMenu {
                     self.quit();
+                    return;
                 }
             }
             KeyCode::Esc => {
                 self.game_state.go_back();
+                return;
             }
             _ => {}
+        }
+
+        // Delegate to current screen
+        let result = match &self.game_state.current_screen {
+            Screen::MainMenu => self.main_menu.handle_key_event(key),
+            Screen::Settings => self.settings.handle_key_event(key),
+            Screen::SaveLoad => self.save_load.handle_key_event(key),
+            Screen::LeagueTable => self.league_table.handle_key_event(key),
+            Screen::MatchModeSelection => self.match_mode_selection.handle_key_event(key),
+            Screen::PlayerDetail { .. } => {
+                if let Some(screen) = &mut self.player_detail {
+                    screen.handle_key_event(key)
+                } else {
+                    None
+                }
+            }
+            Screen::MatchResult { .. } => {
+                if let Some(screen) = &mut self.match_result {
+                    screen.handle_key_event(key)
+                } else {
+                    None
+                }
+            }
+            Screen::SeasonSummary { .. } => {
+                if let Some(screen) = &mut self.season_summary {
+                    screen.handle_key_event(key)
+                } else {
+                    None
+                }
+            }
+            Screen::MatchHistory => self.match_history.handle_key_event(key),
+            Screen::Notifications => self.notifications.handle_key_event(key),
+            Screen::Tactics => self.tactics.handle_key_event(key),
+            Screen::TransferMarket => self.transfer_market.handle_key_event(key),
+            Screen::TeamManagement => self.team_management.handle_key_event(key),
+            Screen::MatchLive { .. } => {
+                if let Some(screen) = &mut self.match_live {
+                    screen.handle_key_event(key)
+                } else {
+                    None
+                }
+            }
+            Screen::FinanceReport => self.finance_report.handle_key_event(key),
+        };
+
+        // Handle screen transition or quit
+        match result {
+            Some(Screen::MainMenu) if self.main_menu.is_exit_selected() => {
+                // Handle ExitGame action from main menu
+                self.quit();
+            }
+            Some(new_screen) => {
+                self.game_state.navigate_to(new_screen);
+            }
+            None => {
+                // Check if ExitGame was signaled via 'q' key on main menu
+                if self.game_state.current_screen == Screen::MainMenu
+                    && key.code == KeyCode::Char('q') {
+                    self.quit();
+                }
+            }
         }
     }
 
@@ -69,6 +168,55 @@ impl TuiApp {
     /// Check if on main menu
     pub fn is_on_main_menu(&self) -> bool {
         self.game_state.current_screen == Screen::MainMenu
+    }
+
+    /// Render current screen
+    pub fn render_current_screen(&mut self, frame: &mut ratatui::Frame, area: ratatui::layout::Rect) {
+        match &self.game_state.current_screen {
+            Screen::MainMenu => self.main_menu.render(frame, area, &self.game_state, self.language),
+            Screen::Settings => self.settings.render(frame, area, &self.game_state, self.language),
+            Screen::SaveLoad => self.save_load.render(frame, area, &self.game_state, self.language),
+            Screen::LeagueTable => self.league_table.render(frame, area, &self.game_state, self.language),
+            Screen::MatchModeSelection => self.match_mode_selection.render(frame, area, &self.game_state, self.language),
+            Screen::PlayerDetail { player_id } => {
+                if self.player_detail.is_none() {
+                    self.player_detail = Some(PlayerDetailScreen::new(player_id.clone()));
+                }
+                if let Some(screen) = &mut self.player_detail {
+                    screen.render(frame, area, &self.game_state, self.language);
+                }
+            }
+            Screen::MatchResult { match_id } => {
+                if self.match_result.is_none() {
+                    self.match_result = Some(MatchResultScreen::new(match_id.clone()));
+                }
+                if let Some(screen) = &mut self.match_result {
+                    screen.render(frame, area, &self.game_state, self.language);
+                }
+            }
+            Screen::SeasonSummary { season } => {
+                if self.season_summary.is_none() {
+                    self.season_summary = Some(SeasonSummaryScreen::new(season.clone()));
+                }
+                if let Some(screen) = &mut self.season_summary {
+                    screen.render(frame, area, &self.game_state, self.language);
+                }
+            }
+            Screen::MatchHistory => self.match_history.render(frame, area, &self.game_state, self.language),
+            Screen::Notifications => self.notifications.render(frame, area, &self.game_state, self.language),
+            Screen::Tactics => self.tactics.render(frame, area, &self.game_state, self.language),
+            Screen::TransferMarket => self.transfer_market.render(frame, area, &self.game_state, self.language),
+            Screen::TeamManagement => self.team_management.render(frame, area, &self.game_state, self.language),
+            Screen::MatchLive { match_id } => {
+                if self.match_live.is_none() {
+                    self.match_live = Some(MatchLiveScreen::new(match_id.clone()));
+                }
+                if let Some(screen) = &mut self.match_live {
+                    screen.render(frame, area, &self.game_state, self.language);
+                }
+            }
+            Screen::FinanceReport => self.finance_report.render(frame, area, &self.game_state, self.language),
+        }
     }
 
     /// Set language

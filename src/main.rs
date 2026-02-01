@@ -101,68 +101,7 @@ fn run_app(
             };
 
             // Render based on current screen
-            match &app.game_state.current_screen {
-                football_manager_ai::game::Screen::MainMenu => {
-                    let mut screen = MainMenuScreen::new();
-                    screen.render(f, content_area, &app.game_state, app.language);
-                }
-                football_manager_ai::game::Screen::Settings => {
-                    let mut screen = SettingsScreen::new();
-                    screen.render(f, content_area, &app.game_state, app.language);
-                }
-                football_manager_ai::game::Screen::SaveLoad => {
-                    let mut screen = SaveLoadScreen::new();
-                    screen.render(f, content_area, &app.game_state, app.language);
-                }
-                football_manager_ai::game::Screen::LeagueTable => {
-                    let mut screen = LeagueTableScreen::new();
-                    screen.render(f, content_area, &app.game_state, app.language);
-                }
-                football_manager_ai::game::Screen::TeamManagement => {
-                    let mut screen = TeamManagementScreen::new();
-                    screen.render(f, content_area, &app.game_state, app.language);
-                }
-                football_manager_ai::game::Screen::Tactics => {
-                    let mut screen = TacticsScreen::new();
-                    screen.render(f, content_area, &app.game_state, app.language);
-                }
-                football_manager_ai::game::Screen::TransferMarket => {
-                    let mut screen = TransferMarketScreen::new();
-                    screen.render(f, content_area, &app.game_state, app.language);
-                }
-                football_manager_ai::game::Screen::MatchModeSelection => {
-                    let mut screen = MatchModeSelectionScreen::new();
-                    screen.render(f, content_area, &app.game_state, app.language);
-                }
-                football_manager_ai::game::Screen::PlayerDetail { .. } => {
-                    let mut screen = PlayerDetailScreen::new("player_1".to_string());
-                    screen.render(f, content_area, &app.game_state, app.language);
-                }
-                football_manager_ai::game::Screen::MatchResult { .. } => {
-                    let mut screen = MatchResultScreen::new("match_1".to_string());
-                    screen.render(f, content_area, &app.game_state, app.language);
-                }
-                football_manager_ai::game::Screen::SeasonSummary { .. } => {
-                    let mut screen = SeasonSummaryScreen::new("2026-27".to_string());
-                    screen.render(f, content_area, &app.game_state, app.language);
-                }
-                football_manager_ai::game::Screen::MatchHistory => {
-                    let mut screen = MatchHistoryScreen::new();
-                    screen.render(f, content_area, &app.game_state, app.language);
-                }
-                football_manager_ai::game::Screen::Notifications => {
-                    let mut screen = NotificationsScreen::new();
-                    screen.render(f, content_area, &app.game_state, app.language);
-                }
-                football_manager_ai::game::Screen::MatchLive { .. } => {
-                    let mut screen = MatchLiveScreen::new("match_1".to_string());
-                    screen.render(f, content_area, &app.game_state, app.language);
-                }
-                football_manager_ai::game::Screen::FinanceReport => {
-                    let mut screen = FinanceReportScreen::new();
-                    screen.render(f, content_area, &app.game_state, app.language);
-                }
-            }
+            app.render_current_screen(f, content_area);
         })?;
 
         // Handle input
