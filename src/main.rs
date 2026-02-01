@@ -1,5 +1,5 @@
 use football_manager_ai::game::GameState;
-use football_manager_ai::team::{League, Team};
+use football_manager_ai::game::init::{quick_start, load_game};
 use football_manager_ai::ui::TuiApp;
 use football_manager_ai::ui::{
     MainMenuScreen,
@@ -18,8 +18,7 @@ use football_manager_ai::ui::{
     MatchLiveScreen,
     FinanceReportScreen,
 };
-use football_manager_ai::data::Database;
-use football_manager_ai::ai::generate_league;
+use football_manager_ai::data::SaveManager;
 use std::io;
 use ratatui::{
     backend::CrosstermBackend,
@@ -182,48 +181,21 @@ fn run_app(
 }
 
 fn setup_game() -> Result<GameState, Box<dyn std::error::Error>> {
-    // Try to load from save, otherwise create new game
-    let db_path = "game.db";
+    // Check for existing saves
+    let save_manager = SaveManager::default();
+    let saves = save_manager.list_saves()?;
 
-    if std::path::Path::new(db_path).exists() {
-        // Load existing game
-        let db = Database::new(db_path)?;
-        let save_manager = football_manager_ai::data::SaveManager::default();
-        let saves = save_manager.list_saves()?;
-
-        if !saves.is_empty() {
-            println!("Loading saved game...");
-            // Load the most recent save
-            let state = save_manager.load_game(saves[0].slot)?;
-            return Ok(state);
-        }
+    if !saves.is_empty() {
+        // Load the most recent save
+        println!("Loading saved game from slot {}...", saves[0].slot);
+        let (game_state, _db) = load_game(saves[0].slot)?;
+        println!("Game loaded successfully!");
+        return Ok(game_state);
     }
 
-    // Create new game
-    println!("Creating new game...");
-
-    // Generate league and teams using AI module
-    let league = generate_league(20, 120); // 20 teams, skill level 120
-
-    // Get team objects from the league
-    let teams: Vec<Team> = league.teams.iter().map(|team_id| {
-        // For now, create basic teams - in production would fetch from database
-        Team::new(team_id.clone(), format!("Team {}", team_id), league.id.clone(), 50_000_000)
-    }).collect();
-
-    // Create game state
-    let player_team_id = league.teams.get(0).cloned().unwrap_or_default();
-    let mut game_state = GameState::new(player_team_id, league, teams, 2026);
-    game_state.db_path = db_path.to_string();
-
-    // Initialize database
-    let db = Database::new(db_path)?;
-    db.run_migrations()?;
-
-    // Save initial game state
-    let save_manager = football_manager_ai::data::SaveManager::default();
-    save_manager.create_new_save(1, &game_state, &db)?;
-
+    // No saves found, create new game using quick_start
+    println!("No saved games found. Creating new game...");
+    let (game_state, _db) = quick_start()?;
     println!("Game created successfully!");
 
     Ok(game_state)
