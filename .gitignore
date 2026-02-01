@@ -24,3 +24,6 @@ target
 .cursor/
 .vscode/
 saves/
+
+# Git worktrees
+.worktrees/
