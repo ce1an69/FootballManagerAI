@@ -21,7 +21,4 @@ pub use transfer_decision::{
     TeamWeakness, WeaknessSeverity, TransferTarget, TransferPriority,
     AITransferAction, AITransferActionType, TransferDecisionError
 };
-pub use events::{
-    EventGenerator, RandomEvent, RandomEventType, InjuryType,
-    EventSeverity, EventImpact
-};
+pub use events::{RandomEvent, InjuryType, MediaImpact};

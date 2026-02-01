@@ -1,309 +1,192 @@
-use crate::team::{Team, Position};
-use crate::game::GameState;
+use crate::game::{Notification, NotificationType, NotificationPriority};
 use rand::Rng;
 
-/// Random event types
+/// Injury types with duration information
 #[derive(Debug, Clone, PartialEq)]
-pub enum RandomEventType {
-    Injury,
-    TransferOffer,
-    MediaStory,
-    Scandal,
-    Achievement,
-    BoardConfidence,
-    FanSupport,
-}
-
-/// Injury types
-#[derive(Debug, Clone, Copy, PartialEq)]
 pub enum InjuryType {
-    Muscle,
-    Knee,
-    Ankle,
-    Hamstring,
-    Groin,
-    Concussion,
-    Broken,
+    /// Minor injury - 1-3 weeks
+    Minor { weeks: u32 },
+    /// Moderate injury - 4-8 weeks
+    Moderate { weeks: u32 },
+    /// Severe injury - 9-26 weeks
+    Severe { weeks: u32 },
+    /// Career ending injury
+    CareerEnding,
 }
 
-/// Random game event
-#[derive(Debug, Clone)]
-pub struct RandomEvent {
-    pub id: String,
-    pub event_type: RandomEventType,
-    pub title: String,
-    pub description: String,
-    pub affected_team_id: Option<String>,
-    pub affected_player_id: Option<String>,
-    pub severity: EventSeverity,
-    pub impact: EventImpact,
+impl InjuryType {
+    /// Get the duration in weeks, if applicable
+    pub fn weeks(&self) -> Option<u32> {
+        match self {
+            InjuryType::Minor { weeks } => Some(*weeks),
+            InjuryType::Moderate { weeks } => Some(*weeks),
+            InjuryType::Severe { weeks } => Some(*weeks),
+            InjuryType::CareerEnding => None,
+        }
+    }
+
+    /// Create a random minor injury
+    pub fn random_minor() -> Self {
+        let mut rng = rand::thread_rng();
+        let weeks = rng.gen_range(1..=3);
+        InjuryType::Minor { weeks }
+    }
+
+    /// Create a random moderate injury
+    pub fn random_moderate() -> Self {
+        let mut rng = rand::thread_rng();
+        let weeks = rng.gen_range(4..=8);
+        InjuryType::Moderate { weeks }
+    }
+
+    /// Create a random severe injury
+    pub fn random_severe() -> Self {
+        let mut rng = rand::thread_rng();
+        let weeks = rng.gen_range(9..=26);
+        InjuryType::Severe { weeks }
+    }
 }
 
-/// Event severity
-#[derive(Debug, Clone, Copy, PartialEq)]
-pub enum EventSeverity {
-    Low,
-    Medium,
-    High,
-    Critical,
+/// Random event types that can occur during the game
+#[derive(Debug, Clone, PartialEq)]
+pub enum RandomEvent {
+    /// Player injury event
+    Injury {
+        player_id: String,
+        player_name: String,
+        injury_type: InjuryType,
+    },
+
+    /// Transfer offer for a player
+    TransferOffer {
+        player_id: String,
+        player_name: String,
+        from_team: String,
+        offer_amount: u64,
+    },
+
+    /// Media story about the team or a player
+    MediaStory {
+        headline: String,
+        impact: MediaImpact,
+    },
+
+    /// Contract expiry notification
+    ContractExpiry {
+        player_id: String,
+        player_name: String,
+    },
 }
 
-/// Event impact on game
-#[derive(Debug, Clone, Copy, PartialEq)]
-pub enum EventImpact {
+/// Impact level of media stories
+#[derive(Debug, Clone, PartialEq)]
+pub enum MediaImpact {
     Positive,
     Negative,
     Neutral,
 }
 
-/// Event generator
-pub struct EventGenerator {
-    rng: rand::rngs::ThreadRng,
-}
+impl RandomEvent {
+    /// Convert the random event to a notification
+    pub fn to_notification(&self) -> Notification {
+        match self {
+            RandomEvent::Injury { player_id, player_name, injury_type } => {
+                let (title, message, priority) = match injury_type {
+                    InjuryType::Minor { weeks } => (
+                        "Minor Injury Reported".to_string(),
+                        format!("{} has suffered a minor injury and will be out for {} week(s).", player_name, weeks),
+                        NotificationPriority::Normal,
+                    ),
+                    InjuryType::Moderate { weeks } => (
+                        "Injury Update".to_string(),
+                        format!("{} has suffered a moderate injury and will be out for {} weeks.", player_name, weeks),
+                        NotificationPriority::High,
+                    ),
+                    InjuryType::Severe { weeks } => (
+                        "Severe Injury Alert".to_string(),
+                        format!("{} has suffered a severe injury and will be out for {} weeks.", player_name, weeks),
+                        NotificationPriority::Urgent,
+                    ),
+                    InjuryType::CareerEnding => (
+                        "Tragic Injury News".to_string(),
+                        format!("{} has suffered a career-ending injury. Our thoughts are with them.", player_name),
+                        NotificationPriority::Urgent,
+                    ),
+                };
 
-impl EventGenerator {
-    /// Create new event generator
-    pub fn new() -> Self {
-        Self {
-            rng: rand::thread_rng(),
+                Notification {
+                    id: uuid::Uuid::new_v4().to_string(),
+                    title,
+                    message,
+                    notification_type: NotificationType::Injury,
+                    priority,
+                    read: false,
+                    created_at: std::time::SystemTime::now()
+                        .duration_since(std::time::UNIX_EPOCH)
+                        .unwrap()
+                        .as_secs(),
+                }
+            }
+
+            RandomEvent::TransferOffer { player_id, player_name, from_team, offer_amount } => {
+                Notification {
+                    id: uuid::Uuid::new_v4().to_string(),
+                    title: "Transfer Offer Received".to_string(),
+                    message: format!(
+                        "{} has made a ${} offer for {}. Transfer window is open.",
+                        from_team,
+                        offer_amount,
+                        player_name
+                    ),
+                    notification_type: NotificationType::Transfer,
+                    priority: NotificationPriority::High,
+                    read: false,
+                    created_at: std::time::SystemTime::now()
+                        .duration_since(std::time::UNIX_EPOCH)
+                        .unwrap()
+                        .as_secs(),
+                }
+            }
+
+            RandomEvent::MediaStory { headline, impact } => {
+                let priority = match impact {
+                    MediaImpact::Positive => NotificationPriority::Normal,
+                    MediaImpact::Negative => NotificationPriority::High,
+                    MediaImpact::Neutral => NotificationPriority::Low,
+                };
+
+                Notification {
+                    id: uuid::Uuid::new_v4().to_string(),
+                    title: "Media Report".to_string(),
+                    message: headline.clone(),
+                    notification_type: NotificationType::News,
+                    priority,
+                    read: false,
+                    created_at: std::time::SystemTime::now()
+                        .duration_since(std::time::UNIX_EPOCH)
+                        .unwrap()
+                        .as_secs(),
+                }
+            }
+
+            RandomEvent::ContractExpiry { player_id, player_name } => {
+                Notification {
+                    id: uuid::Uuid::new_v4().to_string(),
+                    title: " Contract Expiring Soon".to_string(),
+                    message: format!(
+                        "{}'s contract is expiring soon. Consider renewing or they may leave on a free transfer.",
+                        player_name
+                    ),
+                    notification_type: NotificationType::Contract,
+                    priority: NotificationPriority::High,
+                    read: false,
+                    created_at: std::time::SystemTime::now()
+                        .duration_since(std::time::UNIX_EPOCH)
+                        .unwrap()
+                        .as_secs(),
+                }
+            }
         }
-    }
-
-    /// Generate random event based on probability
-    pub fn generate_random_event(
-        &mut self,
-        game_state: &GameState,
-    ) -> Option<RandomEvent> {
-        // Only generate events occasionally (5% chance per call)
-        if self.rng.gen_range(0..=100) > 5 {
-            return None;
-        }
-
-        // Choose event type based on weights
-        let event_type = self.choose_event_type();
-
-        match event_type {
-            RandomEventType::Injury => self.generate_injury_event(game_state),
-            RandomEventType::TransferOffer => self.generate_transfer_offer_event(game_state),
-            RandomEventType::MediaStory => self.generate_media_story_event(game_state),
-            RandomEventType::Achievement => self.generate_achievement_event(game_state),
-            RandomEventType::BoardConfidence => self.generate_board_confidence_event(game_state),
-            _ => None,
-        }
-    }
-
-    /// Choose event type based on weighted probability
-    fn choose_event_type(&mut self) -> RandomEventType {
-        let roll = self.rng.gen_range(0..=100);
-
-        match roll {
-            0..=15 => RandomEventType::Injury,          // 15%
-            16..=30 => RandomEventType::TransferOffer,  // 15%
-            31..=55 => RandomEventType::MediaStory,     // 25%
-            56..=70 => RandomEventType::Achievement,    // 15%
-            71..=85 => RandomEventType::BoardConfidence, // 15%
-            86..=100 => RandomEventType::FanSupport,    // 15%
-            _ => RandomEventType::MediaStory,
-        }
-    }
-
-    /// Generate injury event
-    fn generate_injury_event(&mut self, game_state: &GameState) -> Option<RandomEvent> {
-        // Get player team
-        let team = game_state.get_player_team()?;
-
-        // Get player IDs from the team
-        let player_ids = &team.players;
-
-        if player_ids.is_empty() {
-            return None;
-        }
-
-        // Select random player ID
-        let player_id = &player_ids[self.rng.gen_range(0..player_ids.len())];
-
-        // Generate random injury type
-        let injury_types = [
-            InjuryType::Muscle,
-            InjuryType::Knee,
-            InjuryType::Ankle,
-            InjuryType::Hamstring,
-            InjuryType::Groin,
-            InjuryType::Concussion,
-            InjuryType::Broken,
-        ];
-        let injury_type = injury_types[self.rng.gen_range(0..injury_types.len())];
-
-        // Duration based on severity
-        let (duration, severity) = match injury_type {
-            InjuryType::Broken => (90 + self.rng.gen_range(0..=90), EventSeverity::Critical),
-            InjuryType::Knee => (60 + self.rng.gen_range(0..=60), EventSeverity::High),
-            InjuryType::Concussion => (14 + self.rng.gen_range(0..=28), EventSeverity::Medium),
-            _ => (7 + self.rng.gen_range(0..=21), EventSeverity::Medium),
-        };
-
-        Some(RandomEvent {
-            id: uuid::Uuid::new_v4().to_string(),
-            event_type: RandomEventType::Injury,
-            title: format!("Injury Reported"),
-            description: format!(
-                "A player has suffered a {} injury and will be out for {} days",
-                format!("{:?}", injury_type).to_lowercase(),
-                duration
-            ),
-            affected_team_id: Some(game_state.player_team_id.clone()),
-            affected_player_id: Some(player_id.clone()),
-            severity,
-            impact: EventImpact::Negative,
-        })
-    }
-
-    /// Generate transfer offer event
-    fn generate_transfer_offer_event(&mut self, game_state: &GameState) -> Option<RandomEvent> {
-        // Get a random team in the league
-        let teams: Vec<_> = game_state.teams.values().collect();
-        if teams.len() < 2 {
-            return None;
-        }
-
-        let target_team = teams[self.rng.gen_range(0..teams.len())];
-        let offering_teams: Vec<_> = teams.iter()
-            .filter(|t| t.id != target_team.id)
-            .take(3)
-            .collect();
-
-        if offering_teams.is_empty() {
-            return None;
-        }
-
-        let offering_team = offering_teams[self.rng.gen_range(0..offering_teams.len())];
-
-        // Get a player ID from target team
-        let player_ids = &target_team.players;
-        if player_ids.is_empty() {
-            return None;
-        }
-
-        let player_id = &player_ids[self.rng.gen_range(0..player_ids.len())];
-        let offer_amount = 1000000 + self.rng.gen_range(0..=5000000);
-
-        Some(RandomEvent {
-            id: uuid::Uuid::new_v4().to_string(),
-            event_type: RandomEventType::TransferOffer,
-            title: format!("Transfer Offer Received"),
-            description: format!(
-                "{} has made a transfer offer of ${} for one of your players",
-                offering_team.name,
-                offer_amount
-            ),
-            affected_team_id: Some(target_team.id.clone()),
-            affected_player_id: Some(player_id.clone()),
-            severity: EventSeverity::Medium,
-            impact: EventImpact::Neutral,
-        })
-    }
-
-    /// Generate media story event
-    fn generate_media_story_event(&mut self, game_state: &GameState) -> Option<RandomEvent> {
-        let team_name = game_state.get_player_team()
-            .map(|t| t.name.as_str())
-            .unwrap_or("your club");
-
-        let stories = [
-            ("Transfer Rumor", format!("Rumors circulate about a big money move involving {}", team_name)),
-            ("Manager Praise", format!("Media praises {}'s recent tactical decisions", team_name)),
-            ("Fan Excitement", format!("Fans excited about {}'s recent form", team_name)),
-            ("Title Race", format!("{} enters title race discussion", team_name)),
-            ("Young Star", format!("Media highlights {} as a rising star to watch", team_name)),
-        ];
-
-        let (title, description) = stories[self.rng.gen_range(0..stories.len())].clone();
-
-        Some(RandomEvent {
-            id: uuid::Uuid::new_v4().to_string(),
-            event_type: RandomEventType::MediaStory,
-            title: title.to_string(),
-            description,
-            affected_team_id: Some(game_state.player_team_id.clone()),
-            affected_player_id: None,
-            severity: EventSeverity::Low,
-            impact: EventImpact::Neutral,
-        })
-    }
-
-    /// Generate achievement event
-    fn generate_achievement_event(&mut self, game_state: &GameState) -> Option<RandomEvent> {
-        // Check for achievements based on game state
-        if game_state.current_date.month == 5 && game_state.current_date.day == 31 {
-            // Season end achievement
-            Some(RandomEvent {
-                id: uuid::Uuid::new_v4().to_string(),
-                event_type: RandomEventType::Achievement,
-                title: "Season Complete!".to_string(),
-                description: format!(
-                    "Season {} has come to an end. {} finished the season.",
-                    game_state.current_date.season_string(),
-                    game_state.get_player_team().map(|t| t.name.as_str()).unwrap_or("Your team")
-                ),
-                affected_team_id: Some(game_state.player_team_id.clone()),
-                affected_player_id: None,
-                severity: EventSeverity::Medium,
-                impact: EventImpact::Positive,
-            })
-        } else {
-            None
-        }
-    }
-
-    /// Generate board confidence event
-    fn generate_board_confidence_event(&mut self, game_state: &GameState) -> Option<RandomEvent> {
-        let team = game_state.get_player_team()?;
-
-        // Determine confidence based on recent form (simulated)
-        let confidence_level = if self.rng.gen_bool(0.5) {
-            "High"
-        } else {
-            "Low"
-        };
-
-        let (severity, impact) = if confidence_level == "High" {
-            (EventSeverity::Low, EventImpact::Positive)
-        } else {
-            (EventSeverity::Medium, EventImpact::Negative)
-        };
-
-        Some(RandomEvent {
-            id: uuid::Uuid::new_v4().to_string(),
-            event_type: RandomEventType::BoardConfidence,
-            title: format!("Board Confidence {}", confidence_level),
-            description: format!(
-                "The {} board expresses {} confidence in your management.",
-                team.name,
-                confidence_level.to_lowercase()
-            ),
-            affected_team_id: Some(game_state.player_team_id.clone()),
-            affected_player_id: None,
-            severity,
-            impact,
-        })
-    }
-
-    /// Check if event should trigger based on game date
-    pub fn should_generate_event(&mut self, game_state: &GameState) -> bool {
-        // Higher chance of events during transfer windows
-        let base_chance = if game_state.current_date.is_transfer_window() {
-            15
-        } else {
-            5
-        };
-
-        self.rng.gen_range(0..=100) < base_chance
-    }
-}
-
-impl Default for EventGenerator {
-    fn default() -> Self {
-        Self::new()
     }
 }
 
@@ -312,47 +195,133 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_event_generator_creation() {
-        let mut gen = EventGenerator::new();
-        // Just verify it creates successfully and can generate event types
-        let event_type = gen.choose_event_type();
-        // Verify it's a valid event type
-        match event_type {
-            RandomEventType::Injury |
-            RandomEventType::TransferOffer |
-            RandomEventType::MediaStory |
-            RandomEventType::Scandal |
-            RandomEventType::Achievement |
-            RandomEventType::BoardConfidence |
-            RandomEventType::FanSupport => {}, // All valid
+    fn test_injury_type_weeks() {
+        let minor = InjuryType::Minor { weeks: 2 };
+        assert_eq!(minor.weeks(), Some(2));
+
+        let moderate = InjuryType::Moderate { weeks: 6 };
+        assert_eq!(moderate.weeks(), Some(6));
+
+        let severe = InjuryType::Severe { weeks: 15 };
+        assert_eq!(severe.weeks(), Some(15));
+
+        let career_ending = InjuryType::CareerEnding;
+        assert_eq!(career_ending.weeks(), None);
+    }
+
+    #[test]
+    fn test_random_injury_creation() {
+        let minor = InjuryType::random_minor();
+        match minor {
+            InjuryType::Minor { weeks } => {
+                assert!(weeks >= 1 && weeks <= 3);
+            }
+            _ => panic!("Expected Minor injury"),
+        }
+
+        let moderate = InjuryType::random_moderate();
+        match moderate {
+            InjuryType::Moderate { weeks } => {
+                assert!(weeks >= 4 && weeks <= 8);
+            }
+            _ => panic!("Expected Moderate injury"),
+        }
+
+        let severe = InjuryType::random_severe();
+        match severe {
+            InjuryType::Severe { weeks } => {
+                assert!(weeks >= 9 && weeks <= 26);
+            }
+            _ => panic!("Expected Severe injury"),
         }
     }
 
     #[test]
-    fn test_should_generate_event() {
-        let mut gen = EventGenerator::new();
-        let game_state = create_test_state();
+    fn test_injury_to_notification() {
+        let event = RandomEvent::Injury {
+            player_id: "player123".to_string(),
+            player_name: "John Doe".to_string(),
+            injury_type: InjuryType::Minor { weeks: 2 },
+        };
 
-        // Test probability
-        let mut count = 0;
-        for _ in 0..1000 {
-            if gen.should_generate_event(&game_state) {
-                count += 1;
-            }
-        }
-        // Should have some events (around 5% or 15% depending on transfer window)
-        assert!(count > 0 && count < 500);
+        let notification = event.to_notification();
+
+        assert_eq!(notification.notification_type, NotificationType::Injury);
+        assert_eq!(notification.priority, NotificationPriority::Normal);
+        assert!(notification.message.contains("John Doe"));
+        assert!(notification.message.contains("2 week"));
+        assert!(!notification.read);
     }
 
-    fn create_test_state() -> GameState {
-        use crate::team::{League, Team};
-        use crate::game::GameDate;
+    #[test]
+    fn test_transfer_offer_to_notification() {
+        let event = RandomEvent::TransferOffer {
+            player_id: "player123".to_string(),
+            player_name: "Jane Smith".to_string(),
+            from_team: "Rival FC".to_string(),
+            offer_amount: 5_000_000,
+        };
 
-        let league = League::new("test".to_string(), "Test".to_string(), vec![]);
-        let team = Team::new("team1".to_string(), "Test Team".to_string(), "test".to_string(), 1000000);
+        let notification = event.to_notification();
 
-        let mut state = GameState::new("team1".to_string(), league, vec![team], 2026);
-        state.current_date = GameDate { year: 2026, month: 9, day: 15 }; // During transfer window
-        state
+        assert_eq!(notification.notification_type, NotificationType::Transfer);
+        assert_eq!(notification.priority, NotificationPriority::High);
+        assert!(notification.message.contains("Jane Smith"));
+        assert!(notification.message.contains("Rival FC"));
+        assert!(notification.message.contains("5000000"));
+    }
+
+    #[test]
+    fn test_media_story_to_notification() {
+        let event = RandomEvent::MediaStory {
+            headline: "Team in title race!".to_string(),
+            impact: MediaImpact::Positive,
+        };
+
+        let notification = event.to_notification();
+
+        assert_eq!(notification.notification_type, NotificationType::News);
+        assert_eq!(notification.priority, NotificationPriority::Normal);
+        assert_eq!(notification.message, "Team in title race!");
+    }
+
+    #[test]
+    fn test_contract_expiry_to_notification() {
+        let event = RandomEvent::ContractExpiry {
+            player_id: "player123".to_string(),
+            player_name: "Alex Johnson".to_string(),
+        };
+
+        let notification = event.to_notification();
+
+        assert_eq!(notification.notification_type, NotificationType::Contract);
+        assert_eq!(notification.priority, NotificationPriority::High);
+        assert!(notification.message.contains("Alex Johnson"));
+        assert!(notification.message.contains("contract"));
+    }
+
+    #[test]
+    fn test_severe_injury_priority() {
+        let severe = RandomEvent::Injury {
+            player_id: "player123".to_string(),
+            player_name: "Star Player".to_string(),
+            injury_type: InjuryType::Severe { weeks: 20 },
+        };
+
+        let notification = severe.to_notification();
+        assert_eq!(notification.priority, NotificationPriority::Urgent);
+    }
+
+    #[test]
+    fn test_career_ending_injury() {
+        let career_ending = RandomEvent::Injury {
+            player_id: "player123".to_string(),
+            player_name: "Veteran Player".to_string(),
+            injury_type: InjuryType::CareerEnding,
+        };
+
+        let notification = career_ending.to_notification();
+        assert_eq!(notification.priority, NotificationPriority::Urgent);
+        assert!(notification.message.contains("career-ending"));
     }
 }
