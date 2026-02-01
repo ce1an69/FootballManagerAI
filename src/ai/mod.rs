@@ -25,3 +25,6 @@ pub use events::{
     RandomEvent, InjuryType, MediaImpact,
     generate_injury_event, generate_transfer_offer, generate_media_story, generate_random_event
 };
+
+// 新增 LLM 模块
+pub mod llm;
