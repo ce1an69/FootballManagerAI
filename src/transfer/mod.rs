@@ -3,6 +3,7 @@
 mod market;
 mod contract;
 mod helpers;
+mod valuation;
 
 // Re-exports
 pub use market::{
@@ -14,7 +15,11 @@ pub use contract::{
     ContractExpirationResult
 };
 pub use helpers::{
-    evaluate_player_value, predict_potential_value,
+    evaluate_player_value as evaluate_player_value_v1,
+    predict_potential_value as predict_potential_value_v1,
     TransferHistory, TransferHistoryEntry, TransferHistoryType,
     TransferStatistics
+};
+pub use valuation::{
+    evaluate_player_value, predict_potential_value,
 };
