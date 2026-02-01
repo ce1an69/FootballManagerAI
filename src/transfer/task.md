@@ -3,27 +3,27 @@
 ## Phase 1: 基础结构
 
 ### Task 1.1: 错误类型定义
-- [ ] 定义 `TransferError` enum
-- [ ] 实现所有错误变体
-- [ ] 添加 `thiserror` derive
+- [x] 定义 `TransferError` enum
+- [x] 实现所有错误变体
+- [x] 添加 `thiserror` derive
 
 **Acceptance Criteria**: 错误类型完整，可以正常使用
 
 ---
 
 ### Task 1.2: 数据结构定义
-- [ ] 定义 `TransferMarket` struct
-- [ ] 定义 `TransferOffer` struct
-- [ ] 定义 `OfferStatus` enum
-- [ ] 定义 `MarketFilter` struct
+- [x] 定义 `TransferMarket` struct
+- [x] 定义 `TransferOffer` struct
+- [x] 定义 `OfferStatus` enum
+- [x] 定义 `MarketFilter` struct
 
 **Acceptance Criteria**: 所有结构定义完成
 
 ---
 
 ### Task 1.3: TransferMarket 构造函数
-- [ ] 实现 `TransferMarket::new()`
-- [ ] 接受 Repository 依赖注入
+- [x] 实现 `TransferMarket::new()`
+- [x] 接受 Repository 依赖注入
 
 **Acceptance Criteria**:
 ```rust
@@ -35,20 +35,20 @@ let market = TransferMarket::new(player_repo, team_repo, transfer_repo);
 ## Phase 2: 浏览功能
 
 ### Task 2.1: 获取市场球员
-- [ ] 实现 `get_market_players()`
-- [ ] 调用 `TransferMarketRepository`
+- [x] 实现 `get_market_players()`
+- [x] 调用 `TransferMarketRepository`
 
 **Acceptance Criteria**: 返回转会市场上的所有球员
 
 ---
 
 ### Task 2.2: 筛选功能
-- [ ] 实现 `search_players()`
-- [ ] 实现位置筛选
-- [ ] 实现能力范围筛选
-- [ ] 实现年龄筛选
-- [ ] 实现薪资筛选
-- [ ] 实现价格筛选
+- [x] 实现 `search_players()`
+- [x] 实现位置筛选
+- [x] 实现能力范围筛选
+- [x] 实现年龄筛选
+- [x] 实现薪资筛选
+- [x] 实现价格筛选
 
 **Acceptance Criteria**:
 ```rust
@@ -66,13 +66,13 @@ assert!(results.iter().all(|p| p.position == Position::ST));
 ## Phase 3: 购买功能
 
 ### Task 3.1: 基础购买逻辑
-- [ ] 实现 `buy_player()`
-- [ ] 获取球队和球员
-- [ ] 检查预算
-- [ ] 扣除预算
-- [ ] 更新球员所属球队
-- [ ] 从转会市场移除
-- [ ] 持久化变更
+- [x] 实现 `buy_player()`
+- [x] 获取球队和球员
+- [x] 检查预算
+- [x] 扣除预算
+- [x] 更新球员所属球队
+- [x] 从转会市场移除
+- [x] 持久化变更
 
 **Acceptance Criteria**:
 ```rust
@@ -85,8 +85,8 @@ market.buy_player("team1", "player1", 1000000).await?;
 ---
 
 ### Task 3.2: 预算检查
-- [ ] 实现预算验证
-- [ ] 返回清晰的错误信息
+- [x] 实现预算验证
+- [x] 返回清晰的错误信息
 
 **Acceptance Criteria**:
 ```rust
@@ -97,9 +97,9 @@ assert!(matches!(result, Err(TransferError::InsufficientFunds { .. })));
 ---
 
 ### Task 3.3: 合同生成
-- [ ] 实现新球员合同生成
-- [ ] 计算新薪资
-- [ ] 设置合同年限
+- [x] 实现新球员合同生成
+- [x] 计算新薪资
+- [x] 设置合同年限
 
 **Acceptance Criteria**: 购买的球员有合理的合同
 
@@ -108,10 +108,10 @@ assert!(matches!(result, Err(TransferError::InsufficientFunds { .. })));
 ## Phase 4: 出售功能
 
 ### Task 4.1: 挂牌球员
-- [ ] 实现 `list_player()`
-- [ ] 验证所有权
-- [ ] 验证价格合理性
-- [ ] 添加到转会市场
+- [x] 实现 `list_player()`
+- [x] 验证所有权
+- [x] 验证价格合理性
+- [x] 添加到转会市场
 
 **Acceptance Criteria**:
 ```rust
@@ -122,8 +122,8 @@ market.list_player("team1", "player1", 5000000).await?;
 ---
 
 ### Task 4.2: 价格验证
-- [ ] 实现价格范围检查（50%-150% market_value）
-- [ ] 返回错误如果价格不合理
+- [x] 实现价格范围检查（50%-150% market_value）
+- [x] 返回错误如果价格不合理
 
 **Acceptance Criteria**:
 ```rust
@@ -135,9 +135,9 @@ assert!(matches!(result, Err(TransferError::UnreasonablePrice)));
 ---
 
 ### Task 4.3: 取消挂牌
-- [ ] 实现 `delist_player()`
-- [ ] 验证所有权
-- [ ] 从转会市场移除
+- [x] 实现 `delist_player()`
+- [x] 验证所有权
+- [x] 从转会市场移除
 
 **Acceptance Criteria**: 球员不再在转会市场
 
@@ -146,19 +146,19 @@ assert!(matches!(result, Err(TransferError::UnreasonablePrice)));
 ## Phase 5: 合同管理
 
 ### Task 5.1: 续约功能
-- [ ] 实现 `renew_contract()`
-- [ ] 验证所有权
-- [ ] 更新薪资和年限
-- [ ] 持久化
+- [x] 实现 `renew_contract()`
+- [x] 验证所有权
+- [x] 更新薪资和年限
+- [x] 持久化
 
 **Acceptance Criteria**: 续约成功
 
 ---
 
 ### Task 5.2: 合同到期处理
-- [ ] 实现检查合同到期
-- [ ] 返回即将到期球员列表
-- [ ] 可选：自动续约提示
+- [x] 实现检查合同到期
+- [x] 返回即将到期球员列表
+- [x] 可选：自动续约提示
 
 **Acceptance Criteria**: 能识别合同即将到期的球员
 
@@ -167,9 +167,9 @@ assert!(matches!(result, Err(TransferError::UnreasonablePrice)));
 ## Phase 6: AI转会决策
 
 ### Task 6.1: 弱点评估
-- [ ] 实现 `evaluate_weaknesses()`
-- [ ] 分析球队各位置实力
-- [ ] 返回需要补强的位置
+- [x] 实现 `evaluate_weaknesses()`
+- [x] 分析球队各位置实力
+- [x] 返回需要补强的位置
 
 **Acceptance Criteria**:
 ```rust
@@ -180,20 +180,20 @@ let weaknesses = market.evaluate_weaknesses(&team).await?;
 ---
 
 ### Task 6.2: AI购买决策
-- [ ] 实现 `decide_ai_transfer()`
-- [ ] 评估球队需求
-- [ ] 设定预算
-- [ ] 寻找合适球员
-- [ ] 生成报价或返回None
+- [x] 实现 `decide_ai_transfer()`
+- [x] 评估球队需求
+- [x] 设定预算
+- [x] 寻找合适球员
+- [x] 生成报价或返回None
 
 **Acceptance Criteria**: AI能做出合理的转会决策
 
 ---
 
 ### Task 6.3: 批量处理AI转会
-- [ ] 实现 `process_ai_transfers()`
-- [ ] 遍历所有AI球队
-- [ ] 收集所有转会报价
+- [x] 实现 `process_ai_transfers()`
+- [x] 遍历所有AI球队
+- [x] 收集所有转会报价
 
 **Acceptance Criteria**: 能为所有AI球队生成转会决策
 
@@ -202,29 +202,29 @@ let weaknesses = market.evaluate_weaknesses(&team).await?;
 ## Phase 7: 辅助功能
 
 ### Task 7.1: 球员估值
-- [ ] 实现 `evaluate_player_value()`
-- [ ] 返回市场价值
+- [x] 实现 `evaluate_player_value()`
+- [x] 返回市场价值
 
 ---
 
 ### Task 7.2: 潜力预测
-- [ ] 实现 `predict_potential_value()`
-- [ ] 考虑年龄和潜力
+- [x] 实现 `predict_potential_value()`
+- [x] 考虑年龄和潜力
 
 ---
 
 ### Task 7.3: 转会历史
-- [ ] 实现记录转会历史
-- [ ] 实现查询转会历史
-- [ ] 显示最近转会
+- [x] 实现记录转会历史
+- [x] 实现查询转会历史
+- [x] 显示最近转会
 
 ---
 
 ## Phase 8: 模块导出
 
 ### Task 8.1: mod.rs
-- [ ] 导出公共类型
-- [ ] 导出错误类型
+- [x] 导出公共类型
+- [x] 导出错误类型
 
 **Acceptance Criteria**: 其他模块可以正常使用
 
@@ -233,21 +233,21 @@ let weaknesses = market.evaluate_weaknesses(&team).await?;
 ## Phase 9: 测试
 
 ### Task 9.1: 单元测试
-- [ ] 测试购买流程
-- [ ] 测试出售流程
-- [ ] 测试筛选功能
-- [ ] 测试预算检查
-- [ ] 测试价格验证
-- [ ] 测试AI决策
+- [x] 测试购买流程
+- [x] 测试出售流程
+- [x] 测试筛选功能
+- [x] 测试预算检查
+- [x] 测试价格验证
+- [x] 测试AI决策
 
 **Acceptance Criteria**: `cargo test --lib transfer` 全部通过
 
 ---
 
 ### Task 9.2: 集成测试
-- [ ] 测试完整转会流程
+- [x] 测试完整转会流程
   - 挂牌 → AI购买 → 数据更新
-- [ ] 测试多个AI球队同时转会
+- [x] 测试多个AI球队同时转会
 
 ---
 
